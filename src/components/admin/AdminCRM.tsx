@@ -10,6 +10,8 @@ interface Contact {
   email: string;
   telephone: string | null;
   adresse: string | null;
+  code_postal: string | null;
+  ville: string | null;
   type_contact: 'client' | 'prospect';
   nombre_commandes: number;
   total_achats: number;
@@ -20,6 +22,18 @@ interface Contact {
   created_at: string;
 }
 
+interface ContactFormData {
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  adresse: string;
+  code_postal: string;
+  ville: string;
+  type_contact: 'client' | 'prospect';
+  notes: string;
+}
+
 const AdminCRM: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +41,19 @@ const AdminCRM: React.FC = () => {
   const [filterType, setFilterType] = useState<'tous' | 'client' | 'prospect'>('tous');
   const [sortBy, setSortBy] = useState<'nom' | 'date' | 'commandes' | 'montant'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showModal, setShowModal] = useState(false);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [formData, setFormData] = useState<ContactFormData>({
+    nom: '',
+    prenom: '',
+    email: '',
+    telephone: '',
+    adresse: '',
+    code_postal: '',
+    ville: '',
+    type_contact: 'prospect',
+    notes: ''
+  });
 
   useEffect(() => {
     fetchContacts();
@@ -65,6 +92,119 @@ const AdminCRM: React.FC = () => {
     } catch (error) {
       console.error('Error deleting contact:', error);
       toast.error('Erreur lors de la suppression du contact');
+    }
+  };
+
+  const handleOpenModal = (contact?: Contact) => {
+    if (contact) {
+      setEditingContact(contact);
+      setFormData({
+        nom: contact.nom || '',
+        prenom: contact.prenom || '',
+        email: contact.email,
+        telephone: contact.telephone || '',
+        adresse: contact.adresse || '',
+        code_postal: contact.code_postal || '',
+        ville: contact.ville || '',
+        type_contact: contact.type_contact,
+        notes: contact.notes || ''
+      });
+    } else {
+      setEditingContact(null);
+      setFormData({
+        nom: '',
+        prenom: '',
+        email: '',
+        telephone: '',
+        adresse: '',
+        code_postal: '',
+        ville: '',
+        type_contact: 'prospect',
+        notes: ''
+      });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingContact(null);
+    setFormData({
+      nom: '',
+      prenom: '',
+      email: '',
+      telephone: '',
+      adresse: '',
+      code_postal: '',
+      ville: '',
+      type_contact: 'prospect',
+      notes: ''
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.email) {
+      toast.error('L\'email est obligatoire');
+      return;
+    }
+
+    try {
+      if (editingContact) {
+        // Mise à jour d'un contact existant
+        const { error } = await supabase
+          .from('crm_contacts')
+          .update({
+            nom: formData.nom || null,
+            prenom: formData.prenom || null,
+            email: formData.email,
+            telephone: formData.telephone || null,
+            adresse: formData.adresse || null,
+            code_postal: formData.code_postal || null,
+            ville: formData.ville || null,
+            type_contact: formData.type_contact,
+            notes: formData.notes || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingContact.id);
+
+        if (error) throw error;
+
+        toast.success('Contact mis à jour avec succès');
+      } else {
+        // Création d'un nouveau contact
+        const { error } = await supabase
+          .from('crm_contacts')
+          .insert([{
+            nom: formData.nom || null,
+            prenom: formData.prenom || null,
+            email: formData.email,
+            telephone: formData.telephone || null,
+            adresse: formData.adresse || null,
+            code_postal: formData.code_postal || null,
+            ville: formData.ville || null,
+            type_contact: formData.type_contact,
+            notes: formData.notes || null,
+            nombre_commandes: 0,
+            total_achats: 0,
+            date_premier_contact: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+
+        toast.success('Contact créé avec succès');
+      }
+
+      fetchContacts();
+      handleCloseModal();
+    } catch (error: any) {
+      console.error('Error saving contact:', error);
+      if (error?.code === '23505') {
+        toast.error('Un contact avec cet email existe déjà');
+      } else {
+        toast.error('Erreur lors de l\'enregistrement du contact');
+      }
     }
   };
 
@@ -152,6 +292,13 @@ const AdminCRM: React.FC = () => {
     <div className="w-full max-w-full overflow-x-hidden">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-zinc-800">CRM - Gestion des Contacts</h2>
+        <button
+          onClick={() => handleOpenModal()}
+          className="bg-site-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-all flex items-center space-x-2"
+        >
+          <Plus className="h-5 w-5" />
+          <span>Ajouter un contact</span>
+        </button>
       </div>
 
       {/* Statistiques */}
@@ -344,6 +491,13 @@ const AdminCRM: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button
+                        onClick={() => handleOpenModal(contact)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Modifier"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
                         onClick={() => handleDelete(contact.id)}
                         className="text-red-600 hover:text-red-900"
                         title="Supprimer"
@@ -371,6 +525,170 @@ const AdminCRM: React.FC = () => {
       {!loading && (
         <div className="mt-4 text-sm text-zinc-600">
           Affichage de {filteredAndSortedContacts.length} sur {contacts.length} contacts
+        </div>
+      )}
+
+      {/* Modal de création/édition */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-zinc-800 mb-4">
+                {editingContact ? 'Modifier le contact' : 'Ajouter un contact'}
+              </h3>
+
+              <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Prénom */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Prénom
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.prenom}
+                      onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                      placeholder="Jean"
+                    />
+                  </div>
+
+                  {/* Nom */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Nom
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.nom}
+                      onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                      placeholder="Dupont"
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                      placeholder="jean.dupont@example.com"
+                    />
+                  </div>
+
+                  {/* Téléphone */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Téléphone
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.telephone}
+                      onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                      placeholder="06 12 34 56 78"
+                    />
+                  </div>
+
+                  {/* Type de contact */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Type de contact
+                    </label>
+                    <select
+                      value={formData.type_contact}
+                      onChange={(e) => setFormData({ ...formData, type_contact: e.target.value as 'client' | 'prospect' })}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent bg-white"
+                    >
+                      <option value="prospect">🎯 Prospect</option>
+                      <option value="client">👤 Client</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Adresse */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">
+                    Adresse
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.adresse}
+                    onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                    placeholder="123 Rue de la Paix"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  {/* Code postal */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Code postal
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.code_postal}
+                      onChange={(e) => setFormData({ ...formData, code_postal: e.target.value })}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                      placeholder="44800"
+                    />
+                  </div>
+
+                  {/* Ville */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Ville
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ville}
+                      onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                      placeholder="Saint-Herblain"
+                    />
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">
+                    Notes
+                  </label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                    placeholder="Notes internes sur ce contact..."
+                  />
+                </div>
+
+                {/* Boutons */}
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 border border-zinc-300 text-zinc-700 rounded-lg hover:bg-zinc-50 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-site-primary text-white rounded-lg hover:bg-opacity-90 transition-colors"
+                  >
+                    {editingContact ? 'Mettre à jour' : 'Créer le contact'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       )}
     </div>
