@@ -51,47 +51,41 @@ BEGIN
   -- Vérifier si le contact existe déjà
   SELECT id INTO v_contact_id
   FROM crm_contacts
-  WHERE email = NEW.email;
+  WHERE email = NEW.customer_email;
 
   -- Si le contact n'existe pas, le créer
   IF v_contact_id IS NULL THEN
     INSERT INTO crm_contacts (
       nom,
-      prenom,
       email,
       telephone,
-      adresse,
       type_contact,
       nombre_commandes,
       total_achats,
       derniere_commande,
       date_premier_contact
     ) VALUES (
-      NEW.nom,
-      NEW.prenom,
-      NEW.email,
-      NEW.telephone,
-      NEW.adresse,
+      NEW.customer_name,
+      NEW.customer_email,
+      NEW.customer_phone,
       'client',
       1,
-      NEW.total,
+      NEW.total_amount,
       NEW.created_at,
       NEW.created_at
     )
     RETURNING id INTO v_contact_id;
   ELSE
     -- Si le contact existe, mettre à jour ses statistiques
-    SELECT COUNT(*), COALESCE(SUM(total), 0)
+    SELECT COUNT(*), COALESCE(SUM(total_amount), 0)
     INTO v_order_count, v_total_spent
-    FROM orders
-    WHERE email = NEW.email;
+    FROM commandes
+    WHERE customer_email = NEW.customer_email;
 
     UPDATE crm_contacts
     SET
-      nom = COALESCE(NEW.nom, nom),
-      prenom = COALESCE(NEW.prenom, prenom),
-      telephone = COALESCE(NEW.telephone, telephone),
-      adresse = COALESCE(NEW.adresse, adresse),
+      nom = COALESCE(NEW.customer_name, nom),
+      telephone = COALESCE(NEW.customer_phone, telephone),
       type_contact = 'client',
       nombre_commandes = v_order_count,
       total_achats = v_total_spent,
@@ -105,9 +99,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger pour synchroniser automatiquement les contacts depuis les commandes
-DROP TRIGGER IF EXISTS trigger_sync_contact_on_order ON orders;
+DROP TRIGGER IF EXISTS trigger_sync_contact_on_order ON commandes;
 CREATE TRIGGER trigger_sync_contact_on_order
-  AFTER INSERT ON orders
+  AFTER INSERT ON commandes
   FOR EACH ROW
   EXECUTE FUNCTION sync_contact_from_order();
 

@@ -43,6 +43,8 @@ const AdminCRM: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showModal, setShowModal] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [contactOrders, setContactOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [formData, setFormData] = useState<ContactFormData>({
     nom: '',
     prenom: '',
@@ -95,6 +97,25 @@ const AdminCRM: React.FC = () => {
     }
   };
 
+  const fetchContactOrders = async (email: string) => {
+    setLoadingOrders(true);
+    try {
+      const { data, error } = await supabase
+        .from('commandes')
+        .select('*')
+        .eq('customer_email', email)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setContactOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching contact orders:', error);
+      setContactOrders([]);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
   const handleOpenModal = (contact?: Contact) => {
     if (contact) {
       setEditingContact(contact);
@@ -109,8 +130,11 @@ const AdminCRM: React.FC = () => {
         type_contact: contact.type_contact,
         notes: contact.notes || ''
       });
+      // Charger l'historique des commandes
+      fetchContactOrders(contact.email);
     } else {
       setEditingContact(null);
+      setContactOrders([]);
       setFormData({
         nom: '',
         prenom: '',
@@ -531,11 +555,58 @@ const AdminCRM: React.FC = () => {
       {/* Modal de création/édition */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h3 className="text-xl font-bold text-zinc-800 mb-4">
-                {editingContact ? 'Modifier le contact' : 'Ajouter un contact'}
-              </h3>
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-zinc-800">
+                    {editingContact ? 'Fiche Contact' : 'Ajouter un contact'}
+                  </h3>
+                  {editingContact && (
+                    <p className="text-sm text-zinc-500 mt-1">
+                      Client depuis le {formatDate(editingContact.date_premier_contact)}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="text-zinc-400 hover:text-zinc-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Statistiques du contact (si édition) */}
+              {editingContact && (
+                <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-gradient-to-r from-site-primary/10 to-site-buttons/10 rounded-lg">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <ShoppingBag className="h-4 w-4 text-site-primary mr-1" />
+                      <p className="text-2xl font-bold text-zinc-800">{editingContact.nombre_commandes}</p>
+                    </div>
+                    <p className="text-xs text-zinc-600">Commandes</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
+                      <p className="text-2xl font-bold text-zinc-800">{editingContact.total_achats.toFixed(2)} €</p>
+                    </div>
+                    <p className="text-xs text-zinc-600">Total achats</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <Calendar className="h-4 w-4 text-blue-600 mr-1" />
+                      <p className="text-sm font-bold text-zinc-800">
+                        {editingContact.derniere_commande ? formatDate(editingContact.derniere_commande) : '-'}
+                      </p>
+                    </div>
+                    <p className="text-xs text-zinc-600">Dernière commande</p>
+                  </div>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -669,6 +740,55 @@ const AdminCRM: React.FC = () => {
                     placeholder="Notes internes sur ce contact..."
                   />
                 </div>
+
+                {/* Historique des commandes (si édition) */}
+                {editingContact && (
+                  <div className="mt-6 pt-6 border-t border-zinc-200">
+                    <h4 className="text-lg font-semibold text-zinc-800 mb-3 flex items-center">
+                      <ShoppingBag className="h-5 w-5 mr-2 text-site-primary" />
+                      Historique des commandes ({contactOrders.length})
+                    </h4>
+
+                    {loadingOrders ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-site-primary mx-auto"></div>
+                        <p className="mt-2 text-sm text-zinc-500">Chargement...</p>
+                      </div>
+                    ) : contactOrders.length > 0 ? (
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {contactOrders.map((order) => (
+                          <div key={order.id} className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg hover:bg-zinc-100 transition-colors">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <p className="text-sm font-medium text-zinc-800">
+                                  Commande #{order.order_number}
+                                </p>
+                                <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                                  order.payment_status === 'paid'
+                                    ? 'bg-green-100 text-green-800'
+                                    : order.payment_status === 'pending'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {order.payment_status === 'paid' ? 'Payé' : order.payment_status === 'pending' ? 'En attente' : 'Annulé'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-zinc-500 mt-1">
+                                {formatDate(order.created_at)}
+                                {order.pickup_date && ` • Retrait prévu: ${formatDate(order.pickup_date)}`}
+                              </p>
+                            </div>
+                            <div className="text-right ml-4">
+                              <p className="text-sm font-bold text-zinc-800">{order.total_amount.toFixed(2)} €</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-zinc-500 text-center py-6">Aucune commande pour ce contact</p>
+                    )}
+                  </div>
+                )}
 
                 {/* Boutons */}
                 <div className="flex justify-end space-x-3 mt-6">
