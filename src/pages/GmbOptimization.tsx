@@ -46,30 +46,32 @@ const GmbOptimization: React.FC = () => {
             <div className="bg-green-50 border-2 border-green-500 p-6 rounded-lg">
               <p className="text-sm font-bold text-green-800 mb-3">⭐ NOUVELLE DESCRIPTION OPTIMISÉE (copier-coller) :</p>
               <div className="bg-white p-4 rounded border border-green-200">
-                <p className="font-bold text-lg mb-2">Épicerie bio à Saint-Herblain | Fruits et légumes bio à proximité</p>
+                <p className="font-bold text-lg mb-2">Primeur & Fromagerie à Saint-Herblain | Fruits et légumes frais</p>
 
-                <p className="mb-3">Au Matin Vert, votre épicerie bio de quartier au Centre Commercial des Thébaudières depuis plus de 20 ans.</p>
+                <p className="mb-3">Au Matin Vert, votre commerce de proximité au Centre Commercial des Thébaudières depuis plus de 20 ans. Qualité, fraîcheur et conseil personnalisé.</p>
 
-                <p className="font-semibold mb-2">🌿 Nos produits :</p>
+                <p className="font-semibold mb-2">🍎 Nos produits :</p>
                 <ul className="list-disc ml-6 mb-3 space-y-1">
-                  <li>Fruits et légumes bio et locaux</li>
-                  <li>Fromages à la coupe (crèmerie et fromagerie)</li>
-                  <li>Produits locaux du terroir</li>
-                  <li>Épicerie fine bio</li>
+                  <li>Fruits et légumes frais (MIN de Rezé)</li>
+                  <li>Fromages à la coupe - Large sélection</li>
+                  <li>Crèmerie et produits laitiers</li>
+                  <li>Produits locaux quand c'est possible</li>
+                  <li>Épicerie fine</li>
+                  <li>Produits bio disponibles</li>
                 </ul>
 
-                <p className="font-semibold mb-2">🚚 Services :</p>
+                <p className="font-semibold mb-2">⭐ Nos atouts :</p>
                 <ul className="list-disc ml-6 mb-3 space-y-1">
-                  <li>Livraison à domicile</li>
-                  <li>Produits frais quotidiens</li>
-                  <li>Conseils personnalisés</li>
-                  <li>Direct producteur quand c'est possible</li>
+                  <li>Conseils personnalisés depuis plus de 20 ans</li>
+                  <li>Qualité et fraîcheur garanties</li>
+                  <li>Livraison à domicile possible</li>
+                  <li>Service de proximité</li>
                 </ul>
 
-                <p className="mb-2">📍 Localisation : Centre Commercial des Thébaudières, 1 Rue du Nil, 44800 Saint-Herblain</p>
+                <p className="mb-2">📍 Localisation : Centre Commercial des Thébaudières, 1 Rue du Nil, 44800 Saint-Herblain (près de Nantes)</p>
 
                 <p className="text-sm text-gray-600 italic">
-                  Votre magasin bio près de chez vous ! Épicerie bio autour de moi, fruits et légumes bio livrés à domicile.
+                  Votre primeur et fromagerie de quartier ! Fruits et légumes frais, fromages à la coupe, produits de qualité.
                 </p>
               </div>
             </div>
@@ -81,22 +83,24 @@ const GmbOptimization: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                 <p className="font-semibold text-blue-900">✅ Primeur</p>
-                <p className="text-xs text-blue-700">(Déjà présente)</p>
-              </div>
-              <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                <p className="font-semibold text-green-900">+ Épicerie bio</p>
-              </div>
-              <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                <p className="font-semibold text-green-900">+ Magasin d'alimentation biologique</p>
+                <p className="text-xs text-blue-700">(Déjà présente - CATÉGORIE PRINCIPALE)</p>
               </div>
               <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                 <p className="font-semibold text-green-900">+ Fromagerie</p>
+                <p className="text-xs text-green-700">(IMPORTANT - produit phare)</p>
               </div>
               <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                 <p className="font-semibold text-green-900">+ Crèmerie</p>
               </div>
               <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                <p className="font-semibold text-green-900">+ Magasin de fruits et légumes</p>
+              </div>
+              <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                 <p className="font-semibold text-green-900">+ Épicerie fine</p>
+              </div>
+              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-300">
+                <p className="font-semibold text-yellow-900">+ Épicerie (optionnel)</p>
+                <p className="text-xs text-yellow-700">(Si vous souhaitez mentionner les produits bio disponibles)</p>
               </div>
             </div>
           </section>
@@ -108,13 +112,14 @@ const GmbOptimization: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {[
                 'Livraison',
-                'Livraison le jour même',
                 'Retrait en magasin',
-                'Produits biologiques',
                 'Produits locaux',
+                'Produits frais',
+                'Fromages à la coupe',
                 'Parking gratuit',
                 'Paiement CB',
-                'Paiement sans contact'
+                'Paiement sans contact',
+                'Produits biologiques (optionnel)'
               ].map((attr) => (
                 <div key={attr} className="bg-gray-50 border border-gray-200 p-2 rounded text-sm">
                   ✅ {attr}
@@ -155,8 +160,8 @@ const GmbOptimization: React.FC = () => {
                 <p className="font-semibold text-purple-900 mb-2">Exemple - Arrivage</p>
                 <p className="text-sm text-gray-700">
                   🍎 Nouveaux arrivages cette semaine !<br />
-                  Fruits et légumes bio frais du jour.<br />
-                  Venez découvrir nos produits locaux.<br />
+                  Fruits et légumes frais du MIN de Rezé.<br />
+                  Qualité et fraîcheur garanties.<br />
                   📍 Centre Commercial des Thébaudières
                 </p>
               </div>
@@ -165,16 +170,16 @@ const GmbOptimization: React.FC = () => {
                 <p className="font-semibold text-purple-900 mb-2">Exemple - Fromages</p>
                 <p className="text-sm text-gray-700">
                   🧀 Découvrez notre sélection de fromages à la coupe<br />
-                  Produits artisanaux et bio<br />
-                  Conseils personnalisés par notre équipe
+                  Large gamme artisanale et de terroir<br />
+                  Conseils personnalisés depuis plus de 20 ans !
                 </p>
               </div>
 
               <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg">
                 <p className="font-semibold text-purple-900 mb-2">Exemple - Livraison</p>
                 <p className="text-sm text-gray-700">
-                  🚚 Livraison à domicile disponible !<br />
-                  Commandez vos fruits et légumes bio en ligne<br />
+                  🚚 Livraison à domicile possible !<br />
+                  Commandez vos fruits, légumes et fromages<br />
                   📞 02 40 63 49 31
                 </p>
               </div>
@@ -188,21 +193,28 @@ const GmbOptimization: React.FC = () => {
               <div className="bg-gray-50 border-l-4 border-site-primary p-4 rounded">
                 <p className="font-semibold text-gray-900">Q : Proposez-vous la livraison à domicile ?</p>
                 <p className="text-sm text-gray-700 mt-1">
-                  R : Oui ! Nous livrons vos fruits et légumes bio à domicile. Contactez-nous au 02 40 63 49 31.
+                  R : Oui ! Nous livrons vos fruits, légumes et fromages à domicile. Contactez-nous au 02 40 63 49 31.
                 </p>
               </div>
 
               <div className="bg-gray-50 border-l-4 border-site-primary p-4 rounded">
-                <p className="font-semibold text-gray-900">Q : Vos produits sont-ils bio ?</p>
+                <p className="font-semibold text-gray-900">Q : Vendez-vous des fromages à la coupe ?</p>
                 <p className="text-sm text-gray-700 mt-1">
-                  R : Oui, nous proposons une large gamme de fruits, légumes et produits bio. Nous privilégions les producteurs locaux.
+                  R : Oui ! Nous proposons une large sélection de fromages à la coupe avec conseils personnalisés. Venez découvrir notre gamme artisanale et de terroir.
+                </p>
+              </div>
+
+              <div className="bg-gray-50 border-l-4 border-site-primary p-4 rounded">
+                <p className="font-semibold text-gray-900">Q : Avez-vous des produits locaux ?</p>
+                <p className="text-sm text-gray-700 mt-1">
+                  R : Oui, nous privilégions les produits locaux quand c'est possible. Fruits et légumes frais du MIN de Rezé, produits régionaux de qualité.
                 </p>
               </div>
 
               <div className="bg-gray-50 border-l-4 border-site-primary p-4 rounded">
                 <p className="font-semibold text-gray-900">Q : Quels sont vos horaires ?</p>
                 <p className="text-sm text-gray-700 mt-1">
-                  R : Mardi-Vendredi : 8h30-12h45 et 15h30-19h | Samedi : 8h30-13h et 15h30-19h
+                  R : Mardi-Vendredi : 8h30-12h45 et 15h30-19h | Samedi : 8h30-13h et 15h30-19h | Fermé dimanche et lundi
                 </p>
               </div>
             </div>
@@ -224,8 +236,8 @@ const GmbOptimization: React.FC = () => {
               <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
                 <p className="font-semibold text-green-900 mb-2">Modèle - Avis positif :</p>
                 <p className="text-sm text-gray-700 italic">
-                  Merci [Prénom] pour votre avis ! 🌿<br />
-                  Nous sommes ravis que vous appréciez nos produits bio et locaux.<br />
+                  Merci [Prénom] pour votre avis ! 🍎<br />
+                  Nous sommes ravis que vous appréciez nos produits frais et notre service.<br />
                   À très bientôt au magasin !<br />
                   L'équipe Au Matin Vert
                 </p>
@@ -253,15 +265,15 @@ const GmbOptimization: React.FC = () => {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {[
-                  'épicerie bio Saint-Herblain',
-                  'fruits et légumes bio à proximité',
-                  'magasin bio Nantes',
-                  'produits locaux 44800',
-                  'épicerie bio autour de moi',
-                  'fruits bio livrés à domicile',
-                  'bio Thébaudières',
+                  'primeur Saint-Herblain',
                   'fromagerie Saint-Herblain',
-                  'primeur bio',
+                  'fruits et légumes frais à proximité',
+                  'fromages à la coupe Thébaudières',
+                  'produits locaux 44800',
+                  'fruits et légumes Nantes',
+                  'crèmerie Saint-Herblain',
+                  'épicerie fine Thébaudières',
+                  'primeur Thébaudières',
                   'livraison à domicile'
                 ].map((keyword, idx) => (
                   <div key={idx} className="bg-white px-3 py-2 rounded text-sm border border-blue-200">
