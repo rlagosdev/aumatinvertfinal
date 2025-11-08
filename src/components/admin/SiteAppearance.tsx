@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Home, ShoppingBag, PartyPopper, Info, Truck } from 'lucide-react';
+import { Home, ShoppingBag, PartyPopper, Info, Truck, Megaphone } from 'lucide-react';
 import HomeConfigManager from './HomeConfigManager';
 import ProductsPageManager from './ProductsPageManager';
 import ServicesPageManager from './ServicesPageManager';
 import EventsConfigManager from './EventsConfigManager';
 import AboutConfigManager from './AboutConfigManager';
+import AnnonceManager from './AnnonceManager';
 
-type PageTab = 'home' | 'products' | 'services' | 'events' | 'about';
+type PageTab = 'home' | 'products' | 'services' | 'events' | 'about' | 'annonces';
 
 const SiteAppearance: React.FC = () => {
   const [activePage, setActivePage] = useState<PageTab>('home');
@@ -42,6 +43,12 @@ const SiteAppearance: React.FC = () => {
       icon: Info,
       description: 'Titre, histoire et valeurs de l\'entreprise'
     },
+    {
+      id: 'annonces' as PageTab,
+      name: 'Annonces',
+      icon: Megaphone,
+      description: 'Annonces popup avec titre, image et boutons'
+    },
   ];
 
   return (
@@ -57,7 +64,7 @@ const SiteAppearance: React.FC = () => {
       {/* Page Selector */}
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
         <h2 className="text-lg font-semibold text-zinc-800 mb-4">Sélectionnez une page à modifier</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pages.map((page) => {
             const Icon = page.icon;
             const isActive = activePage === page.id;
@@ -142,6 +149,7 @@ const SiteAppearance: React.FC = () => {
           {activePage === 'services' && <ServicesPageManager />}
           {activePage === 'events' && <EventsConfigManager />}
           {activePage === 'about' && <AboutConfigManager />}
+          {activePage === 'annonces' && <AnnonceManager />}
         </div>
       </div>
     </div>

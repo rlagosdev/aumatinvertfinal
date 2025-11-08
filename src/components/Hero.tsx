@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabase/client';
-import HeroCarousel from './HeroCarousel';
+import HeroCarouselWithButtons from './HeroCarouselWithButtons';
+
+interface HeroButton {
+  text: string;
+  url: string;
+}
 
 const Hero: React.FC = () => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [showPlayButton, setShowPlayButton] = useState(true);
   const [heroType, setHeroType] = useState<'video' | 'carousel'>('video');
   const [loading, setLoading] = useState(true);
+  const [specialButton, setSpecialButton] = useState<HeroButton>({
+    text: 'Spéciale Fêtes',
+    url: '/evenements'
+  });
+  const [videoUrl, setVideoUrl] = useState<string>('/hero-video.mp4');
 
   useEffect(() => {
     fetchHeroType();
+    fetchButtonConfig();
+    fetchVideoUrl();
   }, []);
 
   const fetchHeroType = async () => {
@@ -30,6 +42,51 @@ const Hero: React.FC = () => {
       console.error('Error fetching hero type:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchButtonConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['hero_special_button_text', 'hero_special_button_url']);
+
+      if (error) {
+        console.warn('Error fetching button config:', error);
+        return;
+      }
+
+      const buttonText = data?.find(s => s.setting_key === 'hero_special_button_text')?.setting_value;
+      const buttonUrl = data?.find(s => s.setting_key === 'hero_special_button_url')?.setting_value;
+
+      setSpecialButton({
+        text: buttonText || 'Spéciale Fêtes',
+        url: buttonUrl || '/evenements'
+      });
+    } catch (error) {
+      console.warn('Error fetching button config:', error);
+    }
+  };
+
+  const fetchVideoUrl = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'hero_video_url')
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.warn('Error fetching video URL:', error);
+        return;
+      }
+
+      if (data?.setting_value) {
+        setVideoUrl(data.setting_value);
+      }
+    } catch (error) {
+      console.warn('Error fetching video URL:', error);
     }
   };
 
@@ -59,9 +116,9 @@ const Hero: React.FC = () => {
     }
   };
 
-  // Si en mode carrousel, afficher le HeroCarousel directement
+  // Si en mode carrousel, afficher le HeroCarouselWithButtons directement
   if (heroType === 'carousel') {
-    return <HeroCarousel />;
+    return <HeroCarouselWithButtons />;
   }
 
   // Sinon afficher la vidéo hero
@@ -233,8 +290,9 @@ const Hero: React.FC = () => {
         loop
         playsInline
         preload="auto"
+        key={videoUrl}
       >
-        <source src="/hero-video.mp4" type="video/mp4" />
+        <source src={videoUrl} type="video/mp4" />
       </video>
 
       {/* Bouton play si autoplay échoue */}
@@ -247,11 +305,11 @@ const Hero: React.FC = () => {
       {/* Overlay */}
       <div className="absolute top-0 left-0 w-full h-full bg-black opacity-0" style={{ pointerEvents: 'none' }}></div>
 
-      {/* Bouton Spéciale Fêtes */}
+      {/* Bouton Spécial (configurable) */}
       <div className="absolute top-0 right-0 z-10 flex flex-col justify-start items-end text-white px-10 py-0">
         <div className="hero-btn-container">
-          <Link to="/evenements" className="hero-btn">
-            <span style={{ position: 'relative', zIndex: 10 }}>Spéciale Fêtes</span>
+          <Link to={specialButton.url} className="hero-btn">
+            <span style={{ position: 'relative', zIndex: 10 }}>{specialButton.text}</span>
           </Link>
         </div>
       </div>

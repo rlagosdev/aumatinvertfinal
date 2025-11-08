@@ -28,6 +28,9 @@ const HomeConfigManager: React.FC = () => {
     carousel_image_4: ''
   });
   const [heroType, setHeroType] = useState<'video' | 'carousel'>('video');
+  const [specialButtonText, setSpecialButtonText] = useState<string>('Spéciale Fêtes');
+  const [specialButtonUrl, setSpecialButtonUrl] = useState<string>('/evenements');
+  const [heroVideoUrl, setHeroVideoUrl] = useState<string>('/hero-video.mp4');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -35,6 +38,8 @@ const HomeConfigManager: React.FC = () => {
     fetchConfigs();
     fetchCarouselImages();
     fetchHeroType();
+    fetchButtonConfig();
+    fetchHeroVideoUrl();
   }, []);
 
   const fetchConfigs = async () => {
@@ -88,6 +93,49 @@ const HomeConfigManager: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching hero type:', error);
+    }
+  };
+
+  const fetchButtonConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['hero_special_button_text', 'hero_special_button_url']);
+
+      if (error) {
+        console.warn('Error fetching button config:', error);
+        return;
+      }
+
+      const buttonText = data?.find(s => s.setting_key === 'hero_special_button_text')?.setting_value;
+      const buttonUrl = data?.find(s => s.setting_key === 'hero_special_button_url')?.setting_value;
+
+      if (buttonText) setSpecialButtonText(buttonText);
+      if (buttonUrl) setSpecialButtonUrl(buttonUrl);
+    } catch (error) {
+      console.warn('Error fetching button config:', error);
+    }
+  };
+
+  const fetchHeroVideoUrl = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'hero_video_url')
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.warn('Error fetching hero video URL:', error);
+        return;
+      }
+
+      if (data?.setting_value) {
+        setHeroVideoUrl(data.setting_value);
+      }
+    } catch (error) {
+      console.warn('Error fetching hero video URL:', error);
     }
   };
 
@@ -176,6 +224,96 @@ const HomeConfigManager: React.FC = () => {
     } catch (error) {
       console.error('Error updating carousel image:', error);
       toast.error('Erreur lors de la mise à jour de l\'image');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleButtonConfigUpdate = async (settingKey: string, newValue: string) => {
+    setSaving(true);
+    try {
+      // Vérifier si la clé existe
+      const { data: existing } = await supabase
+        .from('site_settings')
+        .select('id')
+        .eq('setting_key', settingKey)
+        .single();
+
+      if (existing) {
+        // Update
+        const { error } = await supabase
+          .from('site_settings')
+          .update({ setting_value: newValue })
+          .eq('setting_key', settingKey);
+
+        if (error) throw error;
+      } else {
+        // Insert
+        const { error } = await supabase
+          .from('site_settings')
+          .insert([{
+            setting_key: settingKey,
+            setting_value: newValue,
+            description: settingKey === 'hero_special_button_text'
+              ? 'Texte du bouton spécial du hero'
+              : 'URL du bouton spécial du hero'
+          }]);
+
+        if (error) throw error;
+      }
+
+      // Update local state
+      if (settingKey === 'hero_special_button_text') {
+        setSpecialButtonText(newValue);
+      } else if (settingKey === 'hero_special_button_url') {
+        setSpecialButtonUrl(newValue);
+      }
+
+      toast.success('Configuration du bouton mise à jour');
+    } catch (error) {
+      console.error('Error updating button config:', error);
+      toast.error('Erreur lors de la mise à jour');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleHeroVideoUpdate = async (newUrl: string) => {
+    setSaving(true);
+    try {
+      // Vérifier si la clé existe
+      const { data: existing } = await supabase
+        .from('site_settings')
+        .select('id')
+        .eq('setting_key', 'hero_video_url')
+        .single();
+
+      if (existing) {
+        // Update
+        const { error } = await supabase
+          .from('site_settings')
+          .update({ setting_value: newUrl })
+          .eq('setting_key', 'hero_video_url');
+
+        if (error) throw error;
+      } else {
+        // Insert
+        const { error } = await supabase
+          .from('site_settings')
+          .insert([{
+            setting_key: 'hero_video_url',
+            setting_value: newUrl,
+            description: 'URL de la vidéo hero'
+          }]);
+
+        if (error) throw error;
+      }
+
+      setHeroVideoUrl(newUrl);
+      toast.success('Vidéo hero mise à jour');
+    } catch (error) {
+      console.error('Error updating hero video:', error);
+      toast.error('Erreur lors de la mise à jour de la vidéo');
     } finally {
       setSaving(false);
     }
@@ -284,6 +422,98 @@ const HomeConfigManager: React.FC = () => {
                   ? 'Mode Vidéo Hero activé. Les textes de la section Hero et des boutons d\'action s\'afficheront par-dessus la vidéo.'
                   : 'Mode Carrousel activé. Modifiez les images du carrousel ci-dessous et les textes de la section Hero.'}
                 {' '}Les modifications sont sauvegardées automatiquement lorsque vous quittez un champ.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Section Vidéo Hero - Affichée uniquement si mode vidéo */}
+        {heroType === 'video' && (
+        <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <span className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full flex items-center justify-center text-sm mr-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+            Vidéo du Hero
+          </h3>
+          <p className="text-sm text-gray-600 mb-4 pl-10">
+            Choisissez la vidéo qui sera affichée en arrière-plan de votre page d'accueil.
+          </p>
+          <div className="pl-10">
+            <ImageUploadField
+              label="Vidéo Hero (MP4, WebM)"
+              value={heroVideoUrl}
+              onChange={(url) => handleHeroVideoUpdate(url)}
+              placeholder="/hero-video.mp4 ou https://example.com/video.mp4"
+              showPreview={false}
+              accept="video/*"
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Formats acceptés: MP4, WebM. Recommandé: 1920x1080 ou supérieur, optimisé pour le web.
+            </p>
+            {heroVideoUrl && (
+              <div className="mt-4 bg-white rounded-lg p-4 border border-gray-200">
+                <p className="text-sm font-medium text-gray-700 mb-2">Aperçu de la vidéo:</p>
+                <video
+                  src={heroVideoUrl}
+                  className="w-full max-w-2xl rounded-lg"
+                  style={{ maxHeight: '300px', objectFit: 'cover' }}
+                  controls
+                  muted
+                >
+                  Votre navigateur ne supporte pas la lecture de vidéos.
+                </video>
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* Configuration du bouton spécial - Visible pour les deux modes */}
+        <div className="mb-8 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <span className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full flex items-center justify-center text-sm mr-2">★</span>
+            Bouton Spécial (en haut à droite du hero)
+          </h3>
+          <p className="text-sm text-gray-600 mb-4 pl-10">
+            Ce bouton apparaît en haut à droite de la bannière d'accueil, que vous soyez en mode vidéo ou carrousel.
+          </p>
+          <div className="space-y-4 pl-10">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Texte du bouton
+              </label>
+              <input
+                type="text"
+                value={specialButtonText}
+                onChange={(e) => setSpecialButtonText(e.target.value)}
+                onBlur={(e) => handleButtonConfigUpdate('hero_special_button_text', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                placeholder="Spéciale Fêtes"
+                disabled={saving}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Exemple: "Spéciale Fêtes", "Promotions", "Nouveautés", etc.
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lien du bouton
+              </label>
+              <input
+                type="text"
+                value={specialButtonUrl}
+                onChange={(e) => setSpecialButtonUrl(e.target.value)}
+                onBlur={(e) => handleButtonConfigUpdate('hero_special_button_url', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                placeholder="/evenements"
+                disabled={saving}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Exemples: "/evenements", "/produits", "/promotions", "/nouveautes"
               </p>
             </div>
           </div>

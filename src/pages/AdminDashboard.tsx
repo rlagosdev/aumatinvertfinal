@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
     import { useAuth } from '../context/AuthContext';
     import { supabase } from '../supabase/client';
     import { toast } from 'react-toastify';
-    import { LogOut, BarChart3, Package, Calendar, Users, UserCog, Tag, Palette, Ticket, Menu, X, Layout, Share2, Sparkles, Mail, Send, Bot, ShoppingBag, Bell, Cloud, Video, ContactRound } from 'lucide-react';
+    import { LogOut, BarChart3, Package, Calendar, Users, UserCog, Tag, Palette, Ticket, Menu, X, Layout, Share2, Sparkles, Mail, Send, Bot, ShoppingBag, Bell, Cloud, Video, ContactRound, Megaphone } from 'lucide-react';
     import { useSiteLogo } from '../hooks/useSiteLogo';
     import AdminOverview from '../components/admin/AdminOverview';
     import AdminProducts from '../components/admin/AdminProducts';
@@ -22,6 +22,7 @@ import React, { useState, useEffect } from 'react';
     import APIIntegrations from '../components/admin/APIIntegrations';
     import VideoCallManager from '../components/admin/VideoCallManager';
     import AdminCRM from '../components/admin/AdminCRM';
+    import AnnonceManager from '../components/admin/AnnonceManager';
 
     const AdminDashboard: React.FC = () => {
       const { user, signOut } = useAuth();
@@ -86,6 +87,7 @@ import React, { useState, useEffect } from 'react';
         { id: 'marketing', name: 'Suite Marketing', icon: Sparkles },
         { id: 'videocall', name: 'Visio & Rendez-vous', icon: Video },
         { id: 'notifications', name: 'Notifications Push', icon: Bell },
+        { id: 'annonces', name: 'Annonces Popup', icon: Megaphone },
         { id: 'publisher', name: 'Publication Réseaux Sociaux', icon: Send },
         { id: 'email', name: 'Messagerie', icon: Mail },
         { id: 'apis', name: 'APIs & Intégrations', icon: Cloud },
@@ -226,7 +228,7 @@ import React, { useState, useEffect } from 'react';
 
             {/* Page Content */}
             <main className="p-4 md:p-6 w-full max-w-full">
-              <div className={activeTab === 'customization' || activeTab === 'appearance' || activeTab === 'marketing' || activeTab === 'email' || activeTab === 'publisher' || activeTab === 'shop' || activeTab === 'notifications' || activeTab === 'apis' || activeTab === 'videocall' ? '' : 'bg-white rounded-lg shadow-sm p-3 md:p-6'}>
+              <div className={activeTab === 'customization' || activeTab === 'appearance' || activeTab === 'marketing' || activeTab === 'email' || activeTab === 'publisher' || activeTab === 'shop' || activeTab === 'notifications' || activeTab === 'annonces' || activeTab === 'apis' || activeTab === 'videocall' ? '' : 'bg-white rounded-lg shadow-sm p-3 md:p-6'}>
                 {activeTab === 'overview' && <AdminOverview onNavigate={setActiveTab} />}
                 {activeTab === 'orders' && <AdminOrders />}
                 {activeTab === 'crm' && <AdminCRM />}
@@ -237,6 +239,7 @@ import React, { useState, useEffect } from 'react';
                 {activeTab === 'marketing' && <MarketingSuite onNavigate={setActiveTab} />}
                 {activeTab === 'videocall' && <VideoCallManager />}
                 {activeTab === 'notifications' && <NotificationManager />}
+                {activeTab === 'annonces' && <AnnonceManager />}
                 {activeTab === 'publisher' && <SocialMediaPublisher />}
                 {activeTab === 'email' && <EmailManager />}
                 {activeTab === 'apis' && <APIIntegrations />}
