@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { supabase } from '../../supabase/client';
-import { Users, Mail, Phone, ShoppingBag, Calendar, Search, Filter, Edit, Trash2, Plus, Tag, TrendingUp } from 'lucide-react';
+import { Users, Mail, Phone, ShoppingBag, Calendar, Search, Filter, Edit, Trash2, Plus, Tag, TrendingUp, Download, Upload } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 interface Contact {
@@ -45,6 +45,9 @@ const AdminCRM: React.FC = () => {
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [contactOrders, setContactOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ContactFormData>({
     nom: '',
     prenom: '',
@@ -232,6 +235,137 @@ const AdminCRM: React.FC = () => {
     }
   };
 
+  // Export CSV
+  const handleExportCSV = () => {
+    if (filteredAndSortedContacts.length === 0) {
+      toast.error('Aucun contact à exporter');
+      return;
+    }
+
+    // Créer le contenu CSV
+    const headers = ['Prénom', 'Nom', 'Email', 'Téléphone', 'Adresse', 'Code Postal', 'Ville', 'Type', 'Nombre de commandes', 'Total achats', 'Dernière commande', 'Notes'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredAndSortedContacts.map(contact => [
+        contact.prenom || '',
+        contact.nom || '',
+        contact.email,
+        contact.telephone || '',
+        contact.adresse ? `"${contact.adresse.replace(/"/g, '""')}"` : '',
+        contact.code_postal || '',
+        contact.ville || '',
+        contact.type_contact,
+        contact.nombre_commandes,
+        contact.total_achats.toFixed(2),
+        contact.derniere_commande ? new Date(contact.derniere_commande).toLocaleDateString('fr-FR') : '',
+        contact.notes ? `"${contact.notes.replace(/"/g, '""')}"` : ''
+      ].join(','))
+    ].join('\n');
+
+    // Créer le fichier et télécharger
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `contacts_crm_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success(`${filteredAndSortedContacts.length} contacts exportés avec succès`);
+  };
+
+  // Import CSV
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+
+      if (lines.length < 2) {
+        toast.error('Le fichier CSV est vide');
+        return;
+      }
+
+      // Ignorer la ligne d'en-tête
+      const dataLines = lines.slice(1);
+      let imported = 0;
+      let errors = 0;
+
+      for (const line of dataLines) {
+        // Parser la ligne CSV en tenant compte des guillemets
+        const values: string[] = [];
+        let currentValue = '';
+        let insideQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+
+          if (char === '"') {
+            insideQuotes = !insideQuotes;
+          } else if (char === ',' && !insideQuotes) {
+            values.push(currentValue.trim());
+            currentValue = '';
+          } else {
+            currentValue += char;
+          }
+        }
+        values.push(currentValue.trim());
+
+        const [prenom, nom, email, telephone, adresse, code_postal, ville, type_contact, , , , notes] = values;
+
+        if (!email || !email.includes('@')) {
+          errors++;
+          continue;
+        }
+
+        try {
+          const { error } = await supabase
+            .from('crm_contacts')
+            .insert([{
+              prenom: prenom || null,
+              nom: nom || null,
+              email: email.trim(),
+              telephone: telephone || null,
+              adresse: adresse?.replace(/^"|"$/g, '').replace(/""/g, '"') || null,
+              code_postal: code_postal || null,
+              ville: ville || null,
+              type_contact: (type_contact === 'client' || type_contact === 'prospect') ? type_contact : 'prospect',
+              notes: notes?.replace(/^"|"$/g, '').replace(/""/g, '"') || null,
+              nombre_commandes: 0,
+              total_achats: 0,
+              date_premier_contact: new Date().toISOString()
+            }]);
+
+          if (error && error.code !== '23505') {
+            errors++;
+          } else if (!error) {
+            imported++;
+          }
+        } catch (err) {
+          errors++;
+        }
+      }
+
+      fetchContacts();
+      toast.success(`${imported} contacts importés avec succès${errors > 0 ? ` (${errors} erreurs)` : ''}`);
+      setShowImportModal(false);
+    } catch (error) {
+      console.error('Error importing CSV:', error);
+      toast.error('Erreur lors de l\'import du fichier CSV');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const filteredAndSortedContacts = useMemo(() => {
     let filtered = contacts.filter(contact => {
       const matchesSearch =
@@ -316,13 +450,36 @@ const AdminCRM: React.FC = () => {
     <div className="w-full max-w-full overflow-x-hidden">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-zinc-800">CRM - Gestion des Contacts</h2>
-        <button
-          onClick={() => handleOpenModal()}
-          className="bg-site-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-all flex items-center space-x-2"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Ajouter un contact</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          {/* Bouton Export CSV */}
+          <button
+            onClick={handleExportCSV}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center space-x-2"
+            title="Exporter les contacts en CSV"
+          >
+            <Download className="h-5 w-5" />
+            <span className="hidden sm:inline">Exporter CSV</span>
+          </button>
+
+          {/* Bouton Import CSV */}
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center space-x-2"
+            title="Importer des contacts depuis un CSV"
+          >
+            <Upload className="h-5 w-5" />
+            <span className="hidden sm:inline">Importer CSV</span>
+          </button>
+
+          {/* Bouton Ajouter un contact */}
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-site-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-all flex items-center space-x-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Ajouter</span>
+          </button>
+        </div>
       </div>
 
       {/* Statistiques */}
@@ -807,6 +964,69 @@ const AdminCRM: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal d'import CSV */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+            <h3 className="text-xl font-bold text-zinc-800 mb-4">Importer des contacts (CSV)</h3>
+
+            <div className="mb-4">
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                <p className="text-sm text-blue-800 font-medium mb-2">📋 Format du fichier CSV</p>
+                <p className="text-xs text-blue-700">
+                  Le fichier doit contenir les colonnes suivantes (dans cet ordre) :
+                </p>
+                <ul className="text-xs text-blue-700 mt-2 ml-4 list-disc">
+                  <li>Prénom, Nom, Email, Téléphone, Adresse, Code Postal, Ville, Type, Nombre de commandes, Total achats, Dernière commande, Notes</li>
+                </ul>
+                <p className="text-xs text-blue-700 mt-2">
+                  <strong>Email est obligatoire.</strong> Type = "client" ou "prospect".
+                </p>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleImportCSV}
+                disabled={importing}
+                className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+              />
+            </div>
+
+            {importing && (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-site-primary mx-auto"></div>
+                <p className="mt-2 text-sm text-zinc-600">Import en cours...</p>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImportModal(false);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                disabled={importing}
+                className="px-4 py-2 border border-zinc-300 text-zinc-700 rounded-lg hover:bg-zinc-50 transition-colors disabled:opacity-50"
+              >
+                Fermer
+              </button>
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                disabled={importing}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
+              >
+                <Download className="h-4 w-4" />
+                <span>Télécharger un exemple</span>
+              </button>
             </div>
           </div>
         </div>
