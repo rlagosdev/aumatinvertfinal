@@ -150,22 +150,40 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-zinc-700 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center">
-          <div className="text-zinc-400 text-sm">
-            © 2025 {companyInfo.name}. Tous droits réservés.
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-zinc-400 text-sm">
-              Construit avec ❤️ par <a rel="nofollow" target="_blank" href="https://www.rlbx-developpement.com/" className="text-site-buttons hover:text-site-primary transition-colors">Regis</a>
-            </div>
-            <Link
-              to="/admin/login"
-              className="p-2 text-zinc-500 hover:text-site-buttons transition-colors"
-              aria-label="Administration"
-              title="Espace administrateur"
-            >
-              <Settings className="h-5 w-5" />
+        <div className="border-t border-zinc-700 mt-8 pt-8">
+          {/* Legal Links */}
+          <div className="flex flex-wrap justify-center gap-4 mb-4">
+            <Link to="/privacy-policy" className="text-zinc-400 hover:text-site-buttons text-sm transition-colors">
+              Politique de Confidentialité
             </Link>
+            <span className="text-zinc-600">•</span>
+            <Link to="/terms-of-service" className="text-zinc-400 hover:text-site-buttons text-sm transition-colors">
+              CGV
+            </Link>
+            <span className="text-zinc-600">•</span>
+            <Link to="/legal-notice" className="text-zinc-400 hover:text-site-buttons text-sm transition-colors">
+              Mentions Légales
+            </Link>
+          </div>
+
+          {/* Copyright */}
+          <div className="flex flex-col sm:flex-row justify-between items-center">
+            <div className="text-zinc-400 text-sm">
+              © 2025 {companyInfo.name}. Tous droits réservés.
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-zinc-400 text-sm">
+                Construit avec ❤️ par <a rel="nofollow" target="_blank" href="https://www.rlbx-developpement.com/" className="text-site-buttons hover:text-site-primary transition-colors">Regis</a>
+              </div>
+              <Link
+                to="/admin/login"
+                className="p-2 text-zinc-500 hover:text-site-buttons transition-colors"
+                aria-label="Administration"
+                title="Espace administrateur"
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>

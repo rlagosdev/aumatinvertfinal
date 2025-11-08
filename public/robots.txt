@@ -1,14 +1,27 @@
+# robots.txt pour Au Matin Vert
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://aumatinvert.fr/sitemap.xml
+
+# Pages admin privées
+Disallow: /admin/
+Disallow: /api/
+
+# Optimisation pour Google
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 0
 
+# Optimisation pour Bing
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 0
 
+# Réseaux sociaux
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
 Allow: /

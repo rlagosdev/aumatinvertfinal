@@ -29,6 +29,9 @@ import React, { useLayoutEffect, useState } from 'react';
     import AdminDashboard from './src/pages/AdminDashboard';
     import FacebookCallback from './src/pages/FacebookCallback';
     import ResetNotifications from './src/pages/ResetNotifications';
+    import PrivacyPolicy from './src/pages/PrivacyPolicy';
+    import TermsOfService from './src/pages/TermsOfService';
+    import LegalNotice from './src/pages/LegalNotice';
 
     // Composant pour gérer le scroll instantané sans animation
     const ScrollToTop: React.FC = () => {
@@ -66,6 +69,9 @@ import React, { useLayoutEffect, useState } from 'react';
                       <Route path="/services" element={<Services />} />
                       <Route path="/a-propos" element={<About />} />
                       <Route path="/panier" element={<Cart />} />
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/terms-of-service" element={<TermsOfService />} />
+                      <Route path="/legal-notice" element={<LegalNotice />} />
                       <Route path="/reset-notifications" element={<ResetNotifications />} />
                       <Route path="/admin/login" element={<AdminLogin />} />
                       <Route path="/api/auth/facebook/callback" element={<FacebookCallback />} />
