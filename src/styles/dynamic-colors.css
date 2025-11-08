@@ -1,0 +1,96 @@
+/* Classes utilitaires pour les couleurs dynamiques */
+
+/* Backgrounds */
+.bg-site-primary {
+  background-color: var(--color-primary) !important;
+}
+
+.bg-site-background {
+  background-color: var(--color-background) !important;
+}
+
+.bg-site-buttons {
+  background-color: var(--color-buttons) !important;
+}
+
+.bg-site-company-title {
+  background-color: var(--color-company-title) !important;
+}
+
+.bg-site-slot-occupied {
+  background-color: var(--color-slot-occupied) !important;
+}
+
+.bg-site-slot-available {
+  background-color: var(--color-slot-available) !important;
+}
+
+/* Textes */
+.text-site-primary {
+  color: var(--color-primary) !important;
+}
+
+.text-site-text-dark {
+  color: var(--color-text-dark) !important;
+}
+
+.text-site-text-light {
+  color: var(--color-text-light) !important;
+}
+
+.text-site-company-title {
+  color: var(--color-company-title) !important;
+}
+
+.text-site-buttons {
+  color: var(--color-buttons) !important;
+}
+
+.text-site-slot-occupied {
+  color: var(--color-slot-occupied) !important;
+}
+
+.text-site-slot-available {
+  color: var(--color-slot-available) !important;
+}
+
+/* Borders */
+.border-site-primary {
+  border-color: var(--color-primary) !important;
+}
+
+/* Hover states */
+.hover\:text-site-primary:hover {
+  color: var(--color-primary) !important;
+}
+
+.hover\:text-site-text-light:hover {
+  color: var(--color-text-light) !important;
+}
+
+.hover\:text-site-text-dark:hover {
+  color: var(--color-text-dark) !important;
+}
+
+.hover\:bg-site-primary:hover {
+  background-color: var(--color-primary) !important;
+}
+
+.hover\:bg-site-buttons:hover {
+  background-color: var(--color-buttons) !important;
+}
+
+.hover\:bg-site-company-title:hover {
+  background-color: var(--color-company-title) !important;
+}
+
+/* Gradients */
+.from-site-primary {
+  --tw-gradient-from: var(--color-primary) !important;
+  --tw-gradient-to: rgb(from var(--color-primary) r g b / 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.to-site-primary {
+  --tw-gradient-to: var(--color-primary) !important;
+}

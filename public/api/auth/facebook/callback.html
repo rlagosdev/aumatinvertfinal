@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Facebook OAuth Callback</title>
+</head>
+<body>
+    <script>
+        // Cette page reçoit le code OAuth de Facebook et le renvoie à la fenêtre parente
+
+        // IMPORTANT: Exécuter une seule fois, même si la page se recharge
+        const PROCESSING_KEY = 'facebook_oauth_processing';
+
+        if (sessionStorage.getItem(PROCESSING_KEY) === 'true') {
+            console.log('⚠️ OAuth déjà en cours de traitement, fermeture...');
+            window.close();
+            throw new Error('Already processing');
+        }
+
+        sessionStorage.setItem(PROCESSING_KEY, 'true');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        const error = urlParams.get('error');
+        const errorDescription = urlParams.get('error_description');
+
+        // 🔍 LOG DÉTAILLÉ: Afficher le code reçu pour déboguer
+        console.log('📥 Code OAuth reçu de Facebook:', code);
+        console.log('📥 State reçu:', state);
+        console.log('📥 URL complète:', window.location.href);
+
+        // Sauvegarder le code dans sessionStorage pour voir si c'est toujours le même
+        const lastCode = sessionStorage.getItem('last_oauth_code');
+        if (lastCode === code) {
+            console.error('⚠️ ATTENTION: Facebook a renvoyé le MÊME code OAuth que la tentative précédente!');
+            console.error('Code précédent:', lastCode);
+            console.error('Code actuel:', code);
+        } else {
+            console.log('✅ Nouveau code OAuth reçu (différent du précédent)');
+            sessionStorage.setItem('last_oauth_code', code);
+        }
+
+        // Nettoyer immédiatement l'URL pour éviter les réutilisations
+        if (code && window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            console.log('🧹 URL nettoyée pour éviter la réutilisation');
+        }
+
+        if (error) {
+            // Envoyer l'erreur à la fenêtre parente
+            window.opener.postMessage({
+                type: 'facebook-auth-error',
+                error: errorDescription || error
+            }, window.location.origin);
+            window.close();
+        } else if (code) {
+            // Vérifier le state CSRF
+            const storedState = localStorage.getItem('facebook_oauth_state');
+
+            if (state !== storedState) {
+                window.opener.postMessage({
+                    type: 'facebook-auth-error',
+                    error: 'État CSRF invalide'
+                }, window.location.origin);
+                window.close();
+                return;
+            }
+
+            // Échanger le code contre un token et récupérer les pages
+            exchangeCodeAndFetchPages(code);
+        } else {
+            window.opener.postMessage({
+                type: 'facebook-auth-error',
+                error: 'Aucun code reçu de Facebook'
+            }, window.location.origin);
+            window.close();
+        }
+
+        async function exchangeCodeAndFetchPages(code) {
+            try {
+                // Obtenir le token courte durée
+                // IMPORTANT : En production, cet échange devrait se faire côté serveur
+                // pour ne pas exposer le client_secret
+                const tokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token?` +
+                    `client_id=${getAppId()}&` +
+                    `client_secret=${getAppSecret()}&` +
+                    `redirect_uri=${encodeURIComponent(window.location.origin + window.location.pathname)}&` +
+                    `code=${code}`;
+
+                console.log('🔄 Échange du code OAuth en cours...');
+                console.log('📤 Code envoyé à Facebook:', code);
+
+                const tokenResponse = await fetch(tokenUrl);
+
+                if (!tokenResponse.ok) {
+                    const errorText = await tokenResponse.text();
+                    console.error('❌ Erreur Facebook Graph API:', errorText);
+                    console.error('📤 Code qui a causé l\'erreur:', code);
+                    throw new Error('Erreur lors de l\'échange du code OAuth: ' + errorText);
+                }
+
+                console.log('✅ Code OAuth échangé avec succès');
+
+                const tokenData = await tokenResponse.json();
+                const userToken = tokenData.access_token;
+
+                console.log('🔑 Token utilisateur obtenu:', userToken.substring(0, 20) + '...');
+
+                // Récupérer les pages de l'utilisateur
+                const pagesUrl = `https://graph.facebook.com/v18.0/me/accounts?` +
+                    `fields=id,name,username,access_token,picture&` +
+                    `access_token=${userToken}`;
+
+                console.log('📡 Récupération des pages Facebook...');
+                const pagesResponse = await fetch(pagesUrl);
+
+                if (!pagesResponse.ok) {
+                    const errorText = await pagesResponse.text();
+                    console.error('❌ Erreur API pages:', errorText);
+                    throw new Error('Erreur lors de la récupération des pages Facebook: ' + errorText);
+                }
+
+                const pagesData = await pagesResponse.json();
+                console.log('📄 Réponse complète de l\'API Facebook:', pagesData);
+
+                const pages = pagesData.data || [];
+                console.log('📊 Nombre de pages trouvées:', pages.length);
+
+                if (pages.length > 0) {
+                    console.log('📋 Détails des pages:', pages);
+                }
+
+                if (pages.length === 0) {
+                    console.error('⚠️ Aucune page trouvée dans la réponse API');
+                    console.error('🔍 Réponse brute:', JSON.stringify(pagesData, null, 2));
+                    throw new Error(`Aucune page Facebook trouvée.
+
+💡 Pour utiliser l'API Facebook, vous devez :
+1. Créer une Page Facebook (pas juste un profil)
+2. Être administrateur de cette page
+3. Réessayer la connexion
+
+Créez une page ici : https://www.facebook.com/pages/create`);
+                }
+
+                // Sauvegarder les comptes dans Supabase
+                const savedAccounts = await saveAccountsToSupabase(pages);
+
+                // Envoyer le succès à la fenêtre parente
+                window.opener.postMessage({
+                    type: 'facebook-auth-success',
+                    accountsCount: savedAccounts
+                }, window.location.origin);
+
+                // Nettoyer le flag de traitement
+                sessionStorage.removeItem(PROCESSING_KEY);
+
+                window.close();
+            } catch (error) {
+                console.error('Erreur:', error);
+                window.opener.postMessage({
+                    type: 'facebook-auth-error',
+                    error: error.message
+                }, window.location.origin);
+
+                // Nettoyer le flag de traitement même en cas d'erreur
+                sessionStorage.removeItem(PROCESSING_KEY);
+
+                window.close();
+            }
+        }
+
+        async function saveAccountsToSupabase(pages) {
+            // Utiliser l'API Supabase pour sauvegarder les comptes
+            // Note: Ceci nécessite que Supabase soit accessible depuis cette page
+
+            const supabaseUrl = getSupabaseUrl();
+            const supabaseKey = getSupabaseKey();
+
+            if (!supabaseUrl || !supabaseKey) {
+                throw new Error('Configuration Supabase manquante');
+            }
+
+            // Récupérer l'ID utilisateur depuis le localStorage
+            // Supabase stocke la session dans une clé qui suit ce pattern : sb-{project_id}-auth-token
+            const projectId = supabaseUrl.split('//')[1].split('.')[0]; // "bvvekjhvmorgdvleobdo"
+            const sessionKey = `sb-${projectId}-auth-token`;
+
+            let userId;
+            try {
+                const sessionData = localStorage.getItem(sessionKey);
+                if (!sessionData) {
+                    throw new Error('Session non trouvée dans localStorage');
+                }
+
+                const session = JSON.parse(sessionData);
+                userId = session?.user?.id;
+
+                if (!userId) {
+                    throw new Error('ID utilisateur non trouvé dans la session');
+                }
+
+                console.log('✅ User ID récupéré:', userId);
+            } catch (err) {
+                console.error('❌ Erreur récupération user ID:', err);
+                throw new Error('Utilisateur non connecté. Veuillez vous reconnecter à l\'application.');
+            }
+
+            let savedCount = 0;
+
+            for (const page of pages) {
+                try {
+                    const response = await fetch(`${supabaseUrl}/rest/v1/social_accounts`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': supabaseKey,
+                            'Authorization': `Bearer ${supabaseKey}`,
+                            'Prefer': 'resolution=merge-duplicates'
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            platform: 'facebook',
+                            platform_user_id: page.id,
+                            platform_username: page.username || page.name,
+                            page_name: page.name,
+                            profile_picture_url: page.picture?.data?.url,
+                            access_token: page.access_token,
+                            is_active: true
+                        })
+                    });
+
+                    if (response.ok) {
+                        savedCount++;
+                    }
+                } catch (err) {
+                    console.error('Erreur sauvegarde page:', err);
+                }
+            }
+
+            return savedCount;
+        }
+
+        function getAppId() {
+            // Instagram App ID depuis .env
+            return '801122365840416';
+        }
+
+        function getAppSecret() {
+            // Instagram App Secret depuis .env
+            // ⚠️ ATTENTION : En production, ceci ne devrait JAMAIS être exposé côté client !
+            // Cette implémentation est temporaire pour le développement local uniquement.
+            // Pour la production, créez une Supabase Edge Function pour échanger le code côté serveur.
+            return '4b6aaefca0cf76ca1ad65c6041846ee6';
+        }
+
+        function getSupabaseUrl() {
+            // Supabase URL depuis .env
+            return 'https://bvvekjhvmorgdvleobdo.supabase.co';
+        }
+
+        function getSupabaseKey() {
+            // Supabase Anon Key depuis .env (clé publique, sécurisée)
+            return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2dmVramh2bW9yZ2R2bGVvYmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMDA1NDcsImV4cCI6MjA3NTY3NjU0N30.HoR5ektpKVy4nudbUvGBdWDyKsHqHy1u7Yw1CPVJ-eM';
+        }
+    </script>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h2>Connexion à Facebook...</h2>
+        <p>Veuillez patienter pendant que nous finalisons la connexion.</p>
+    </div>
+</body>
+</html>

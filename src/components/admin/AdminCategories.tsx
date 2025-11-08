@@ -1,0 +1,418 @@
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../../supabase/client';
+import { toast } from 'react-toastify';
+import { Plus, Edit, Trash2, Tag } from 'lucide-react';
+import ExportButton from './ExportButton';
+import ImportButton from './ImportButton';
+import ImageUploadField from './ImageUploadField';
+import { formatDataForExport } from '../../utils/exportUtils';
+
+interface Category {
+  id: string;
+  nom: string;
+  description: string | null;
+  image_url: string | null;
+  type_categorie: string | null;
+  actif: boolean | null;
+  position: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+const AdminCategories: React.FC = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [formData, setFormData] = useState({
+    nom: '',
+    description: '',
+    image_url: '',
+    type_categorie: 'epicerie',
+    actif: true,
+    position: 0,
+  });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('position', { ascending: true })
+        .order('nom');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast.error('Erreur lors du chargement des catégories');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (editingCategory) {
+        const { error } = await supabase
+          .from('categories')
+          .update({
+            nom: formData.nom,
+            description: formData.description || null,
+            image_url: formData.image_url || null,
+            type_categorie: formData.type_categorie,
+            actif: formData.actif,
+            position: formData.position,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingCategory.id);
+
+        if (error) throw error;
+        toast.success('Catégorie mise à jour avec succès');
+      } else {
+        const { error } = await supabase
+          .from('categories')
+          .insert({
+            nom: formData.nom,
+            description: formData.description || null,
+            image_url: formData.image_url || null,
+            type_categorie: formData.type_categorie,
+            actif: formData.actif,
+            position: formData.position,
+          });
+
+        if (error) throw error;
+        toast.success('Catégorie créée avec succès');
+      }
+
+      await fetchCategories();
+      handleCloseForm();
+    } catch (error) {
+      console.error('Error saving category:', error);
+      toast.error('Erreur lors de la sauvegarde');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (category: Category) => {
+    setEditingCategory(category);
+    setFormData({
+      nom: category.nom,
+      description: category.description || '',
+      image_url: category.image_url || '',
+      type_categorie: category.type_categorie || 'epicerie',
+      actif: category.actif ?? true,
+      position: category.position ?? 0,
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (categoryId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryId);
+
+      if (error) throw error;
+
+      setCategories(categories.filter(c => c.id !== categoryId));
+      toast.success('Catégorie supprimée avec succès');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  const handleToggleActive = async (categoryId: string, actif: boolean | null) => {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({ actif: !actif, updated_at: new Date().toISOString() })
+        .eq('id', categoryId);
+
+      if (error) throw error;
+
+      setCategories(categories.map(c =>
+        c.id === categoryId ? { ...c, actif: !actif } : c
+      ));
+      toast.success('Statut mis à jour');
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingCategory(null);
+    setFormData({ nom: '', description: '', image_url: '', type_categorie: 'epicerie', actif: true, position: 0 });
+  };
+
+  const handleImport = async (data: any[]): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .insert(data);
+
+      if (error) {
+        console.error('Error importing categories:', error);
+        toast.error('Erreur lors de l\'import des catégories');
+        return false;
+      }
+
+      await fetchCategories();
+      return true;
+    } catch (error) {
+      console.error('Error importing categories:', error);
+      toast.error('Erreur lors de l\'import des catégories');
+      return false;
+    }
+  };
+
+  if (loading && categories.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+        <p className="mt-4 text-zinc-600">Chargement des catégories...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-zinc-800">Gestion des Catégories</h2>
+        <div className="flex space-x-3">
+          <ExportButton 
+            data={formatDataForExport.categories(categories)}
+            filename="categories"
+            disabled={loading || categories.length === 0}
+          />
+          <ImportButton 
+            type="categories"
+            onImport={handleImport}
+            disabled={loading}
+          />
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nouvelle Catégorie</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Categories Table */}
+      <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
+            <thead className="bg-zinc-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  Catégorie
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  Statut
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  Date de création
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-zinc-200">
+              {categories.map((category) => (
+                <tr key={category.id} className="hover:bg-zinc-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                        <Tag className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <div className="text-sm font-medium text-zinc-900">{category.nom}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
+                    {category.description || 'Aucune description'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => handleToggleActive(category.id, category.actif)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        category.actif ? 'bg-green-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          category.actif ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
+                    {category.created_at ? new Date(category.created_at).toLocaleDateString('fr-FR') : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleEdit(category)}
+                        className="text-purple-600 hover:text-purple-900"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(category.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {categories.length === 0 && !loading && (
+        <div className="text-center py-12">
+          <p className="text-zinc-500">Aucune catégorie trouvée.</p>
+        </div>
+      )}
+
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl my-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-zinc-800">
+                {editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
+              </h3>
+              <button
+                onClick={handleCloseForm}
+                className="text-zinc-400 hover:text-zinc-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                  Nom de la catégorie *
+                </label>
+                <input
+                  type="text"
+                  value={formData.nom}
+                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <ImageUploadField
+                  label="Image de la catégorie"
+                  value={formData.image_url}
+                  onChange={(url) => setFormData({ ...formData, image_url: url })}
+                  placeholder="https://example.com/image.jpg"
+                  showPreview={true}
+                  previewClassName="h-48"
+                  cropAspect={16 / 9}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                  Type de catégorie
+                </label>
+                <select
+                  value={formData.type_categorie}
+                  onChange={(e) => setFormData({ ...formData, type_categorie: e.target.value })}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="epicerie">Épicerie (produits prêts)</option>
+                  <option value="preparation">Préparations sur commande</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                  Position (ordre d'affichage)
+                </label>
+                <input
+                  type="number"
+                  value={formData.position}
+                  onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  min="0"
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="actif"
+                  checked={formData.actif}
+                  onChange={(e) => setFormData({ ...formData, actif: e.target.checked })}
+                  className="w-4 h-4 text-purple-600 bg-zinc-100 border-zinc-300 rounded focus:ring-purple-500"
+                />
+                <label htmlFor="actif" className="ml-2 text-sm text-zinc-700">
+                  Catégorie active
+                </label>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCloseForm}
+                  className="px-4 py-2 text-zinc-600 hover:text-zinc-800"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Sauvegarde...' : (editingCategory ? 'Modifier' : 'Créer')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminCategories;

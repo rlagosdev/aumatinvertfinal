@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Notifications Mobile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      margin: 10px 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      width: 100%;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    button:active {
+      background: #059669;
+    }
+    button:disabled {
+      background: #ccc;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .success { background: #d1fae5; color: #065f46; }
+    .error { background: #fee2e2; color: #991b1b; }
+    .warning { background: #fef3c7; color: #92400e; }
+    .info { background: #dbeafe; color: #1e40af; }
+    .log {
+      background: #1f2937;
+      color: #10b981;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    h1 { color: #10b981; }
+    h2 { color: #374151; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>🔔 Test Notifications Mobile</h1>
+
+  <div class="card">
+    <h2>1. Informations du navigateur</h2>
+    <div id="browser-info" class="log"></div>
+  </div>
+
+  <div class="card">
+    <h2>2. Permission de notification</h2>
+    <div id="permission-status" class="status info">Vérification...</div>
+    <button onclick="requestPermission()">Demander la permission</button>
+  </div>
+
+  <div class="card">
+    <h2>3. Token FCM</h2>
+    <div id="token-status" class="status info">Vérification...</div>
+    <button onclick="getToken()">Obtenir le token</button>
+  </div>
+
+  <div class="card">
+    <h2>4. Service Worker</h2>
+    <div id="sw-status" class="status info">Vérification...</div>
+    <button onclick="checkServiceWorker()">Vérifier SW</button>
+  </div>
+
+  <div class="card">
+    <h2>5. Test de notification</h2>
+    <button onclick="testNotification()">Envoyer notification test</button>
+  </div>
+
+  <div class="card">
+    <h2>📊 Logs</h2>
+    <button onclick="clearLogs()">Effacer logs</button>
+    <div id="logs" class="log"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getMessaging, getToken } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDDhIDfXxIUuyR_CY2Pi9nH9FsP5dW7-fc",
+      authDomain: "au-matin-vert.firebaseapp.com",
+      projectId: "au-matin-vert",
+      storageBucket: "au-matin-vert.firebasestorage.app",
+      messagingSenderId: "697849274497",
+      appId: "1:697849274497:web:94061215628a011e052d80"
+    };
+
+    const VAPID_KEY = "BBPw8HBh2SlI8GeNzJkVcgkQl61BaGQ358eVmPKQqytGEKHngZibuJ7Xb2WYzN_qiAfraA8mVhIfjt9SXS0V9H0";
+
+    const app = initializeApp(firebaseConfig);
+    let messaging = null;
+
+    function log(message, type = 'info') {
+      const logsDiv = document.getElementById('logs');
+      const timestamp = new Date().toLocaleTimeString();
+      logsDiv.textContent += `[${timestamp}] ${message}\n`;
+      logsDiv.scrollTop = logsDiv.scrollHeight;
+      console.log(message);
+    }
+
+    window.clearLogs = function() {
+      document.getElementById('logs').textContent = '';
+    }
+
+    // Informations du navigateur
+    document.getElementById('browser-info').textContent =
+      `Navigateur: ${navigator.userAgent}\n` +
+      `Support SW: ${('serviceWorker' in navigator) ? 'Oui' : 'Non'}\n` +
+      `Support Push: ${('PushManager' in window) ? 'Oui' : 'Non'}\n` +
+      `Support Notification: ${('Notification' in window) ? 'Oui' : 'Non'}`;
+
+    // Permission
+    async function checkPermission() {
+      const permission = Notification.permission;
+      const statusDiv = document.getElementById('permission-status');
+
+      if (permission === 'granted') {
+        statusDiv.className = 'status success';
+        statusDiv.textContent = '✅ Permission accordée';
+      } else if (permission === 'denied') {
+        statusDiv.className = 'status error';
+        statusDiv.textContent = '❌ Permission refusée';
+      } else {
+        statusDiv.className = 'status warning';
+        statusDiv.textContent = '⏳ Permission non demandée';
+      }
+
+      log(`Permission: ${permission}`);
+    }
+
+    window.requestPermission = async function() {
+      try {
+        log('Demande de permission...');
+        const permission = await Notification.requestPermission();
+        log(`Résultat: ${permission}`);
+        checkPermission();
+      } catch (error) {
+        log(`Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    // Token
+    window.getToken = async function() {
+      try {
+        log('Enregistrement du Service Worker...');
+
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+          scope: '/firebase-cloud-messaging-push-scope'
+        });
+
+        log('Service Worker enregistré');
+
+        messaging = getMessaging(app);
+        log('Messaging initialisé');
+
+        log('Demande du token FCM...');
+        const token = await getToken(messaging, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: registration
+        });
+
+        if (token) {
+          log(`✅ Token obtenu: ${token.substring(0, 30)}...`);
+          localStorage.setItem('fcm_token', token);
+
+          const statusDiv = document.getElementById('token-status');
+          statusDiv.className = 'status success';
+          statusDiv.innerHTML = `✅ Token obtenu<br><small style="word-break: break-all;">${token}</small>`;
+
+          // Sauvegarder dans Supabase
+          await saveTokenToSupabase(token);
+        } else {
+          log('❌ Pas de token reçu', 'error');
+        }
+      } catch (error) {
+        log(`❌ Erreur: ${error.message}`, 'error');
+
+        const statusDiv = document.getElementById('token-status');
+        statusDiv.className = 'status error';
+        statusDiv.textContent = `❌ Erreur: ${error.message}`;
+      }
+    }
+
+    async function saveTokenToSupabase(token) {
+      try {
+        log('Sauvegarde du token dans Supabase...');
+
+        const response = await fetch('https://bvvekjhvmorgdvleobdo.supabase.co/rest/v1/user_fcm_tokens', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2dmVramh2bW9yZ2R2bGVvYmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMDA1NDcsImV4cCI6MjA3NTY3NjU0N30.HoR5ektpKVy4nudbUvGBdWDyKsHqHy1u7Yw1CPVJ-eM',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({
+            fcm_token: token,
+            user_email: 'mobile-test',
+            device_type: 'mobile',
+            device_id: 'mobile_' + Date.now()
+          })
+        });
+
+        if (response.ok) {
+          log('✅ Token sauvegardé dans Supabase');
+        } else {
+          log(`⚠️ Erreur Supabase: ${response.status}`, 'warning');
+        }
+      } catch (error) {
+        log(`⚠️ Erreur sauvegarde: ${error.message}`, 'warning');
+      }
+    }
+
+    // Service Worker
+    window.checkServiceWorker = async function() {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        log(`Service Workers trouvés: ${registrations.length}`);
+
+        const statusDiv = document.getElementById('sw-status');
+
+        if (registrations.length > 0) {
+          registrations.forEach(reg => {
+            log(`SW: ${reg.scope}`);
+            log(`  Active: ${reg.active ? 'Oui' : 'Non'}`);
+            log(`  Waiting: ${reg.waiting ? 'Oui' : 'Non'}`);
+          });
+
+          statusDiv.className = 'status success';
+          statusDiv.textContent = `✅ ${registrations.length} Service Worker(s) actif(s)`;
+        } else {
+          statusDiv.className = 'status warning';
+          statusDiv.textContent = '⚠️ Aucun Service Worker';
+        }
+      } catch (error) {
+        log(`Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    // Test notification
+    window.testNotification = async function() {
+      try {
+        const token = localStorage.getItem('fcm_token');
+
+        if (!token) {
+          alert('Veuillez d\'abord obtenir un token FCM');
+          return;
+        }
+
+        log('Envoi de la notification test...');
+
+        const response = await fetch('https://bvvekjhvmorgdvleobdo.supabase.co/functions/v1/send-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2dmVramh2bW9yZ2R2bGVvYmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMDA1NDcsImV4cCI6MjA3NTY3NjU0N30.HoR5ektpKVy4nudbUvGBdWDyKsHqHy1u7Yw1CPVJ-eM',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2dmVramh2bW9yZ2R2bGVvYmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMDA1NDcsImV4cCI6MjA3NTY3NjU0N30.HoR5ektpKVy4nudbUvGBdWDyKsHqHy1u7Yw1CPVJ-eM'
+          },
+          body: JSON.stringify({
+            tokens: [token],
+            title: '🧪 Test Mobile',
+            body: 'Notification test depuis la page de diagnostic',
+            url: '/',
+            icon: '/icon-192x192.png'
+          })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          log('✅ Notification envoyée avec succès');
+          log(`Résultat: ${JSON.stringify(result, null, 2)}`);
+          alert('✅ Notification envoyée ! Vérifiez votre téléphone.');
+        } else {
+          log(`❌ Erreur: ${JSON.stringify(result)}`, 'error');
+          alert(`❌ Erreur: ${result.error || 'Inconnue'}`);
+        }
+      } catch (error) {
+        log(`❌ Erreur: ${error.message}`, 'error');
+        alert(`❌ Erreur: ${error.message}`);
+      }
+    }
+
+    // Init
+    checkPermission();
+    checkServiceWorker();
+  </script>
+</body>
+</html>

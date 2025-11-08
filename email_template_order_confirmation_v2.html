@@ -1,0 +1,151 @@
+<div
+  style="
+    font-family: system-ui, sans-serif, Arial;
+    font-size: 14px;
+    color: #333;
+    padding: 14px 8px;
+    background-color: #f5f5f5;
+  "
+>
+  <div style="max-width: 600px; margin: auto; background-color: #fff">
+    <div style="border-top: 6px solid #7b8a78; padding: 16px">
+      <a
+        style="text-decoration: none; outline: none; margin-right: 8px; vertical-align: middle"
+        href="https://aumatinvert.fr"
+        target="_blank"
+      >
+        <img
+          style="height: 32px; vertical-align: middle"
+          height="32px"
+          src="cid:logo.png"
+          alt="Au Matin Vert"
+        />
+      </a>
+      <span
+        style="
+          font-size: 16px;
+          vertical-align: middle;
+          border-left: 1px solid #333;
+          padding-left: 8px;
+        "
+      >
+        <strong>Merci pour votre commande</strong>
+      </span>
+    </div>
+    <div style="padding: 0 16px">
+      <p>Votre commande sera prête pour le retrait à la date convenue.</p>
+
+      <!-- Vos informations -->
+      <div style="padding: 16px; background-color: #f9f9f9; margin: 16px 0; border-radius: 8px; border: 1px solid #e0e0e0">
+        <p style="margin: 0 0 8px 0"><strong>👤 Vos informations :</strong></p>
+        <p style="margin: 0; color: #666; line-height: 1.6">
+          <strong>Nom :</strong> {{customer_name}}<br />
+          <strong>Email :</strong> {{email}}<br />
+          <strong>Téléphone :</strong> {{customer_phone}}
+        </p>
+      </div>
+
+      <div
+        style="
+          text-align: left;
+          font-size: 14px;
+          padding-bottom: 4px;
+          border-bottom: 2px solid #333;
+        "
+      >
+        <strong>Commande n° {{order_id}}</strong>
+      </div>
+      {{#orders}}
+      <table style="width: 100%; border-collapse: collapse">
+        <tr style="vertical-align: top">
+          <td style="padding: 24px 8px 0 4px; display: inline-block; width: max-content">
+            <img style="height: 64px" height="64px" src="{{image_url}}" alt="produit" />
+          </td>
+          <td style="padding: 24px 8px 0 8px; width: 100%">
+            <div>{{name}}</div>
+            <div style="font-size: 14px; color: #888; padding-top: 4px">Quantité : {{units}}</div>
+          </td>
+          <td style="padding: 24px 4px 0 0; white-space: nowrap">
+            <strong>{{price}} €</strong>
+          </td>
+        </tr>
+      </table>
+      {{/orders}}
+      <div style="padding: 24px 0">
+        <div style="border-top: 2px solid #333"></div>
+      </div>
+      <table style="border-collapse: collapse; width: 100%; text-align: right">
+        <tr>
+          <td style="width: 60%"></td>
+          <td>Livraison</td>
+          <td style="padding: 8px; white-space: nowrap">{{cost.shipping}} €</td>
+        </tr>
+        <tr>
+          <td style="width: 60%"></td>
+          <td style="border-top: 2px solid #333">
+            <strong style="white-space: nowrap">Total de la commande</strong>
+          </td>
+          <td style="padding: 16px 8px; border-top: 2px solid #333; white-space: nowrap">
+            <strong>{{cost.total}} €</strong>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Informations de retrait -->
+      <div style="padding: 24px 16px; background-color: #f9f9f9; margin: 24px 0; border-left: 4px solid #7b8a78">
+        <p style="margin: 0 0 8px 0"><strong>📍 Informations de retrait :</strong></p>
+        <p style="margin: 0 0 12px 0; color: #666">
+          Au Matin Vert<br />
+          1 rue du Nil<br />
+          44800 Saint-Herblain
+        </p>
+
+        <!-- Choix du mode de retrait (si commande mixte) -->
+        {{#pickup_option}}
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #ddd">
+          <p style="margin: 0 0 8px 0"><strong>📦 Mode de retrait choisi :</strong></p>
+          {{#is_single_pickup}}
+          <div style="padding: 12px; background-color: #e8f5e9; border-radius: 8px; border: 1px solid #7b8a78">
+            <p style="margin: 0; color: #2e7d32">
+              <strong>🎯 Retrait en une seule fois</strong>
+            </p>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #555">
+              Tous vos articles seront disponibles le <strong>{{pickup_date}}</strong>
+            </p>
+          </div>
+          {{/is_single_pickup}}
+          {{#is_multiple_pickup}}
+          <div style="padding: 12px; background-color: #fff3e0; border-radius: 8px; border: 1px solid #ff9800">
+            <p style="margin: 0; color: #e65100">
+              <strong>📦 Retrait en 2 fois</strong>
+            </p>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #555">
+              ✓ Articles disponibles immédiatement : dès maintenant<br />
+              📅 Précommandes : à récupérer le <strong>{{pickup_date}}</strong>
+            </p>
+          </div>
+          {{/is_multiple_pickup}}
+        </div>
+        {{/pickup_option}}
+
+        <!-- Date de retrait simple (pour commande sans choix) -->
+        {{#pickup_date_only}}
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #ddd">
+          <p style="margin: 0 0 4px 0"><strong>📅 Date de retrait :</strong></p>
+          <p style="margin: 0; color: #666">{{pickup_date}}</p>
+        </div>
+        {{/pickup_date_only}}
+
+        <p style="margin: 16px 0 0 0; font-size: 12px; color: #888">
+          Vous serez contacté pour confirmer l'heure de retrait
+        </p>
+      </div>
+    </div>
+  </div>
+  <div style="max-width: 600px; margin: auto">
+    <p style="color: #999; text-align: center">
+      Cet email a été envoyé à {{email}}<br />
+      Vous avez reçu cet email car vous avez passé cette commande sur notre site
+    </p>
+  </div>
+</div>

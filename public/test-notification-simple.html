@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Simple Notification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    button {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      width: 100%;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    .log {
+      background: #1f2937;
+      color: #10b981;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔔 Test Simple Notification</h1>
+
+  <button onclick="testSimpleNotification()">Test notification simple (sans Firebase)</button>
+
+  <div id="logs" class="log"></div>
+
+  <script>
+    function log(msg) {
+      document.getElementById('logs').textContent += msg + '\n';
+      console.log(msg);
+    }
+
+    async function testSimpleNotification() {
+      try {
+        log('1. Vérification du support...');
+        if (!('Notification' in window)) {
+          log('❌ Ce navigateur ne supporte pas les notifications');
+          return;
+        }
+        log('✅ Notifications supportées');
+
+        log('2. Permission actuelle: ' + Notification.permission);
+
+        if (Notification.permission === 'default') {
+          log('3. Demande de permission...');
+          const permission = await Notification.requestPermission();
+          log('   Permission: ' + permission);
+
+          if (permission !== 'granted') {
+            log('❌ Permission refusée');
+            return;
+          }
+        }
+
+        if (Notification.permission === 'denied') {
+          log('❌ Permission refusée - Allez dans les paramètres du navigateur pour l\'autoriser');
+          return;
+        }
+
+        log('4. Envoi d\'une notification simple...');
+
+        const notification = new Notification('🎉 Test Simple', {
+          body: 'Si vous voyez ceci, les notifications fonctionnent !',
+          icon: '/icon-192x192.png',
+          badge: '/icon-192x192.png',
+          tag: 'test-simple',
+          requireInteraction: false
+        });
+
+        log('✅ Notification créée !');
+        log('   Vérifiez votre téléphone !');
+
+        notification.onclick = () => {
+          log('👆 Notification cliquée !');
+          window.focus();
+          notification.close();
+        };
+
+      } catch (error) {
+        log('❌ Erreur: ' + error.message);
+        log('   Stack: ' + error.stack);
+      }
+    }
+
+    // Auto-test au chargement
+    log('=== Test de notification simple ===');
+    log('Navigateur: ' + navigator.userAgent);
+    log('Support Notification: ' + ('Notification' in window ? 'OUI' : 'NON'));
+    log('Permission: ' + (Notification.permission || 'N/A'));
+  </script>
+</body>
+</html>

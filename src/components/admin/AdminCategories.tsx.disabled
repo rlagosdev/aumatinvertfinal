@@ -1,0 +1,394 @@
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../../supabase/client';
+import { Plus, Edit, Trash2, Package, AlertTriangle } from 'lucide-react';
+import { toast } from 'react-toastify';
+import ExportButton from './ExportButton';
+import ImportButton from './ImportButton';
+import { formatDataForExport } from '../../utils/exportUtils';
+
+interface Category {
+  id: string;
+  nom: string;
+  description: string | null;
+  actif: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+const AdminCategories: React.FC = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [formData, setFormData] = useState({
+    nom: '',
+    description: '',
+    actif: true
+  });
+  const [productCounts, setProductCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetchCategories();
+    fetchProductCounts();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('nom');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProductCounts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('categorie');
+
+      if (error) throw error;
+
+      const counts: Record<string, number> = {};
+      data?.forEach(product => {
+        counts[product.categorie] = (counts[product.categorie] || 0) + 1;
+      });
+      setProductCounts(counts);
+    } catch (error) {
+      console.error('Error fetching product counts:', error);
+    }
+  };
+
+  const handleCreate = () => {
+    setEditingCategory(null);
+    setFormData({ nom: '', description: '', actif: true });
+    setShowForm(true);
+  };
+
+  const handleEdit = (category: Category) => {
+    setEditingCategory(category);
+    setFormData({
+      nom: category.nom,
+      description: category.description || '',
+      actif: category.actif
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (category: Category) => {
+    const productCount = productCounts[category.nom] || 0;
+    
+    if (productCount > 0) {
+      const confirmMessage = `Cette catégorie contient ${productCount} produit(s). Êtes-vous sûr de vouloir la supprimer ? Les produits deviendront sans catégorie.`;
+      if (!confirm(confirmMessage)) return;
+    } else {
+      if (!confirm(`Êtes-vous sûr de vouloir supprimer la catégorie "${category.nom}" ?`)) return;
+    }
+
+    try {
+      // Mettre à jour les produits pour retirer la catégorie
+      if (productCount > 0) {
+        await supabase
+          .from('products')
+          .update({ categorie: '' })
+          .eq('categorie', category.nom);
+      }
+
+      // Supprimer la catégorie
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', category.id);
+
+      if (error) throw error;
+
+      setCategories(categories.filter(c => c.id !== category.id));
+      fetchProductCounts();
+      toast.success('Catégorie supprimée avec succès');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  const handleToggleActive = async (category: Category) => {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({ actif: !category.actif })
+        .eq('id', category.id);
+
+      if (error) throw error;
+
+      setCategories(categories.map(c =>
+        c.id === category.id ? { ...c, actif: !category.actif } : c
+      ));
+      toast.success(`Catégorie ${!category.actif ? 'activée' : 'désactivée'}`);
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      if (editingCategory) {
+        // Update existing category
+        const { error } = await supabase
+          .from('categories')
+          .update({
+            ...formData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingCategory.id);
+
+        if (error) throw error;
+        toast.success('Catégorie modifiée avec succès');
+      } else {
+        // Create new category
+        const { error } = await supabase
+          .from('categories')
+          .insert([formData]);
+
+        if (error) throw error;
+        toast.success('Catégorie créée avec succès');
+      }
+
+      setShowForm(false);
+      fetchCategories();
+    } catch (error) {
+      console.error('Error saving category:', error);
+      toast.error('Erreur lors de la sauvegarde');
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' 
+        ? (e.target as HTMLInputElement).checked 
+        : value
+    }));
+  };
+
+  const handleImport = async (data: any[]): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .insert(data);
+
+      if (error) {
+        console.error('Error importing categories:', error);
+        toast.error('Erreur lors de l\'import des catégories');
+        return false;
+      }
+
+      await fetchCategories();
+      await fetchProductCounts();
+      return true;
+    } catch (error) {
+      console.error('Error importing categories:', error);
+      toast.error('Erreur lors de l\'import des catégories');
+      return false;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+        <p className="mt-4 text-zinc-600">Chargement des catégories...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-zinc-800">Gestion des Catégories</h2>
+        <div className="flex space-x-3">
+          <ExportButton 
+            data={formatDataForExport.categories(categories, productCounts)}
+            filename="categories"
+            disabled={loading || categories.length === 0}
+          />
+          <ImportButton 
+            type="categories"
+            onImport={handleImport}
+            disabled={loading}
+          />
+          <button
+            onClick={handleCreate}
+            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Ajouter Catégorie</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Categories Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {categories.map((category) => (
+          <div key={category.id} className="bg-white border border-zinc-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-zinc-800 mb-2">{category.nom}</h3>
+                {category.description && (
+                  <p className="text-sm text-zinc-600 mb-3">{category.description}</p>
+                )}
+                
+                <div className="flex items-center space-x-4 text-sm text-zinc-500">
+                  <div className="flex items-center">
+                    <Package className="h-4 w-4 mr-1" />
+                    {productCounts[category.nom] || 0} produits
+                  </div>
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    category.actif 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {category.actif ? 'Active' : 'Inactive'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
+              <button
+                onClick={() => handleToggleActive(category)}
+                className={`text-sm font-medium ${
+                  category.actif 
+                    ? 'text-orange-600 hover:text-orange-800' 
+                    : 'text-green-600 hover:text-green-800'
+                }`}
+              >
+                {category.actif ? 'Désactiver' : 'Activer'}
+              </button>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleEdit(category)}
+                  className="text-purple-600 hover:text-purple-800"
+                  title="Modifier"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(category)}
+                  className="text-red-600 hover:text-red-800"
+                  title="Supprimer"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {productCounts[category.nom] > 0 && (
+              <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700 flex items-center">
+                <AlertTriangle className="h-3 w-3 mr-1 flex-shrink-0" />
+                Cette catégorie contient des produits
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {categories.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-zinc-500">Aucune catégorie trouvée.</p>
+        </div>
+      )}
+
+      {/* Category Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-bold text-zinc-800">
+                {editingCategory ? 'Modifier la catégorie' : 'Ajouter une catégorie'}
+              </h3>
+              <button
+                onClick={() => setShowForm(false)}
+                className="text-zinc-400 hover:text-zinc-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-2">
+                  Nom de la catégorie *
+                </label>
+                <input
+                  type="text"
+                  name="nom"
+                  value={formData.nom}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Description optionnelle..."
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="actif"
+                  checked={formData.actif}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-zinc-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-zinc-700">
+                  Catégorie active
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="px-4 py-2 text-zinc-600 hover:text-zinc-800"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  {editingCategory ? 'Modifier' : 'Créer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminCategories;

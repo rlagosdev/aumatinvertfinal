@@ -1,0 +1,180 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Désactiver les View Transitions du navigateur */
+@view-transition {
+  navigation: none;
+}
+
+::view-transition,
+::view-transition-group(*),
+::view-transition-image-pair(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation: none !important;
+  transition: none !important;
+}
+
+:root {
+  --color-primary: #7b8a78;
+  --color-background: #faf9f7;
+  --color-text-dark: #4e342e;
+  --color-text-light: #ffffff;
+  --color-buttons: #b0c3ac;
+  --color-company-title: #616760;
+  --color-slot-occupied: #c7b3b3;
+  --color-slot-available: #d6ebff;
+}
+
+*:not(.Toastify__toast):not(.Toastify__toast-container):not(.Toastify__toast-body):not(.Toastify__progress-bar):not(.Toastify__close-button):not([class*="Toastify"]) {
+  scroll-behavior: auto !important;
+  transition: none !important;
+  animation: none !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}
+
+*::before:not(.Toastify__toast *),
+*::after:not(.Toastify__toast *) {
+  transition: none !important;
+  animation: none !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}
+
+/* Allow Toastify animations - exceptions to global rules */
+
+html {
+  scroll-behavior: auto !important;
+  overflow-x: hidden;
+  view-transition-name: none !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    view-transition-name: none !important;
+  }
+}
+
+body {
+  background-color: var(--color-background);
+  font-family: 'Lato', sans-serif;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Assurer un rendu stable sans saut */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Forcer la page à toujours commencer en haut */
+main {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+html, body {
+  scroll-padding: 0 !important;
+  scroll-margin: 0 !important;
+}
+
+/* Désactiver toutes les animations Tailwind */
+.animate-spin,
+.animate-ping,
+.animate-pulse,
+.animate-bounce {
+  animation: none !important;
+}
+
+/* Désactiver toutes les transitions CSS */
+.transition,
+.transition-all,
+.transition-colors,
+.transition-opacity,
+.transition-shadow,
+.transition-transform {
+  transition: none !important;
+}
+
+/* Forcer le positionnement en haut lors du chargement */
+body:not(.loaded) {
+  overflow: hidden;
+}
+
+/* Empêcher tout décalage de scroll pendant la navigation */
+html.is-changing-route {
+  scroll-behavior: auto !important;
+  overflow: hidden;
+}
+
+body.is-changing-route {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  top: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Force Toastify to work properly */
+.Toastify__toast-container {
+  z-index: 9999 !important;
+}
+
+.Toastify__toast {
+  animation: Toastify__slideInRight 0.3s !important;
+  transition: opacity 0.3s !important;
+}
+
+.Toastify__toast--closing {
+  animation: Toastify__slideOutRight 0.3s !important;
+}
+
+.Toastify__progress-bar {
+  animation: Toastify__trackProgress linear 1 forwards !important;
+}
+
+@keyframes Toastify__trackProgress {
+  0% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes Toastify__slideInRight {
+  from {
+    transform: translate3d(110%, 0, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes Toastify__slideOutRight {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(110%, 0, 0);
+    opacity: 0;
+  }
+}
