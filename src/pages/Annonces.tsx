@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ExternalLink } from 'lucide-react';
 import { supabase } from '../supabase/client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface AnnonceButton {
   text: string;
@@ -20,6 +20,7 @@ interface AnnonceConfig {
 }
 
 const Annonces: React.FC = () => {
+  const navigate = useNavigate();
   const [config, setConfig] = useState<AnnonceConfig>({
     title: 'Annonce Spéciale',
     description: 'Découvrez nos offres exclusives !',
@@ -82,7 +83,7 @@ const Annonces: React.FC = () => {
   };
 
   const handleClose = () => {
-    setShowPopup(false);
+    navigate('/');
   };
 
   if (loading) {
@@ -175,22 +176,6 @@ const Annonces: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Message quand popup est fermé */}
-      {!showPopup && (
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Annonce fermée</h2>
-          <p className="text-gray-600 mb-6">
-            L'annonce a été fermée. Vous pouvez recharger la page pour la voir à nouveau.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-site-primary hover:bg-site-primary-dark text-white font-semibold py-3 px-6 rounded-lg transition-all"
-          >
-            Recharger la page
-          </button>
         </div>
       )}
 
