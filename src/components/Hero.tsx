@@ -1,17 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabase/client';
+import HeroCarousel from './HeroCarousel';
 
 const Hero: React.FC = () => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [showPlayButton, setShowPlayButton] = useState(true);
+  const [heroType, setHeroType] = useState<'video' | 'carousel'>('video');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHeroType();
+  }, []);
+
+  const fetchHeroType = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'home_hero_type')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setHeroType(data.setting_value as 'video' | 'carousel');
+      }
+    } catch (error) {
+      console.error('Error fetching hero type:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-    const video = videoRef.current;
-    if (video) {
-      // Ne rien faire - attendre que l'utilisateur clique sur play
-      // Le bouton play sera affiché par défaut (showPlayButton = true)
+    if (heroType === 'video') {
+      const video = videoRef.current;
+      if (video) {
+        // Ne rien faire - attendre que l'utilisateur clique sur play
+        // Le bouton play sera affiché par défaut (showPlayButton = true)
+      }
     }
-  }, []);
+  }, [heroType]);
 
   const handlePlayClick = () => {
     const video = videoRef.current;
@@ -29,6 +59,12 @@ const Hero: React.FC = () => {
     }
   };
 
+  // Si en mode carrousel, afficher le HeroCarousel directement
+  if (heroType === 'carousel') {
+    return <HeroCarousel />;
+  }
+
+  // Sinon afficher la vidéo hero
   return (
     <section className="relative w-full h-screen overflow-hidden bg-black">
       {/* Styles intégrés */}

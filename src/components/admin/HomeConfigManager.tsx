@@ -27,12 +27,14 @@ const HomeConfigManager: React.FC = () => {
     carousel_image_3: '',
     carousel_image_4: ''
   });
+  const [heroType, setHeroType] = useState<'video' | 'carousel'>('video');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchConfigs();
     fetchCarouselImages();
+    fetchHeroType();
   }, []);
 
   const fetchConfigs = async () => {
@@ -68,6 +70,65 @@ const HomeConfigManager: React.FC = () => {
       setCarouselImages(images);
     } catch (error) {
       console.error('Error fetching carousel images:', error);
+    }
+  };
+
+  const fetchHeroType = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'home_hero_type')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setHeroType(data.setting_value as 'video' | 'carousel');
+      }
+    } catch (error) {
+      console.error('Error fetching hero type:', error);
+    }
+  };
+
+  const handleHeroTypeChange = async (newType: 'video' | 'carousel') => {
+    setSaving(true);
+    try {
+      // Vérifier si la clé existe
+      const { data: existing } = await supabase
+        .from('site_settings')
+        .select('id')
+        .eq('setting_key', 'home_hero_type')
+        .single();
+
+      if (existing) {
+        // Update
+        const { error } = await supabase
+          .from('site_settings')
+          .update({ setting_value: newType })
+          .eq('setting_key', 'home_hero_type');
+
+        if (error) throw error;
+      } else {
+        // Insert
+        const { error } = await supabase
+          .from('site_settings')
+          .insert([{
+            setting_key: 'home_hero_type',
+            setting_value: newType,
+            description: 'Type de hero sur la page d\'accueil (video ou carousel)'
+          }]);
+
+        if (error) throw error;
+      }
+
+      setHeroType(newType);
+      toast.success(`Hero changé en mode ${newType === 'video' ? 'Vidéo' : 'Carrousel'}`);
+    } catch (error) {
+      console.error('Error updating hero type:', error);
+      toast.error('Erreur lors du changement de mode');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -160,20 +221,76 @@ const HomeConfigManager: React.FC = () => {
           </div>
         </div>
 
+        {/* Sélecteur de type de Hero */}
+        <div className="bg-gradient-to-r from-purple-50 to-cyan-50 border border-purple-200 rounded-lg p-6 mb-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Type de bannière d'accueil</h3>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => handleHeroTypeChange('video')}
+              disabled={saving}
+              className={`flex-1 px-6 py-4 rounded-lg border-2 transition-all ${
+                heroType === 'video'
+                  ? 'border-site-primary bg-white shadow-md'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                  heroType === 'video' ? 'bg-site-primary' : 'bg-gray-200'
+                }`}>
+                  <svg className={`w-6 h-6 ${heroType === 'video' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <span className={`font-semibold ${heroType === 'video' ? 'text-site-primary' : 'text-gray-700'}`}>
+                  Vidéo Hero
+                </span>
+                <span className="text-xs text-gray-500 mt-1">Vidéo en arrière-plan</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleHeroTypeChange('carousel')}
+              disabled={saving}
+              className={`flex-1 px-6 py-4 rounded-lg border-2 transition-all ${
+                heroType === 'carousel'
+                  ? 'border-site-primary bg-white shadow-md'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                  heroType === 'carousel' ? 'bg-site-primary' : 'bg-gray-200'
+                }`}>
+                  <ImageIcon className={`w-6 h-6 ${heroType === 'carousel' ? 'text-white' : 'text-gray-600'}`} />
+                </div>
+                <span className={`font-semibold ${heroType === 'carousel' ? 'text-site-primary' : 'text-gray-700'}`}>
+                  Carrousel d'images
+                </span>
+                <span className="text-xs text-gray-500 mt-1">Diaporama d'images</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start">
             <AlertCircle className="h-5 w-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
             <div>
               <h3 className="font-semibold text-blue-900 mb-1">Comment utiliser ?</h3>
               <p className="text-sm text-blue-800">
-                Modifiez les images du carrousel et les textes de la section Hero, des features et des boutons d'action.
-                Les modifications sont sauvegardées automatiquement lorsque vous quittez un champ.
+                {heroType === 'video'
+                  ? 'Mode Vidéo Hero activé. Les textes de la section Hero et des boutons d\'action s\'afficheront par-dessus la vidéo.'
+                  : 'Mode Carrousel activé. Modifiez les images du carrousel ci-dessous et les textes de la section Hero.'}
+                {' '}Les modifications sont sauvegardées automatiquement lorsque vous quittez un champ.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Section Carrousel */}
+        {/* Section Carrousel - Affichée uniquement si mode carrousel */}
+        {heroType === 'carousel' && (
         <div className="mb-8">
           <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center border-b pb-2">
             <span className="w-8 h-8 bg-site-primary text-white rounded-full flex items-center justify-center text-sm mr-2">0</span>
@@ -195,6 +312,7 @@ const HomeConfigManager: React.FC = () => {
             ))}
           </div>
         </div>
+        )}
 
         {/* Section Hero */}
         <div className="mb-8">
