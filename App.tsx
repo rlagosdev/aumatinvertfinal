@@ -32,6 +32,7 @@ import React, { useLayoutEffect, useState } from 'react';
     import PrivacyPolicy from './src/pages/PrivacyPolicy';
     import TermsOfService from './src/pages/TermsOfService';
     import LegalNotice from './src/pages/LegalNotice';
+    import GmbOptimization from './src/pages/GmbOptimization';
 
     // Composant pour gérer le scroll instantané sans animation
     const ScrollToTop: React.FC = () => {
@@ -73,6 +74,7 @@ import React, { useLayoutEffect, useState } from 'react';
                       <Route path="/terms-of-service" element={<TermsOfService />} />
                       <Route path="/legal-notice" element={<LegalNotice />} />
                       <Route path="/reset-notifications" element={<ResetNotifications />} />
+                      <Route path="/gmb-ee283d4936ce203b5264331f749330b0" element={<GmbOptimization />} />
                       <Route path="/admin/login" element={<AdminLogin />} />
                       <Route path="/api/auth/facebook/callback" element={<FacebookCallback />} />
                       <Route path="/admin/*" element={<AdminDashboard />} />
