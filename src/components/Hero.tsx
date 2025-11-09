@@ -430,7 +430,7 @@ const Hero: React.FC = () => {
           ref={videoRef}
           className="absolute top-0 left-0 w-full h-full"
           style={{
-            objectFit: isMobile ? 'cover' : 'contain',
+            objectFit: 'cover',
             objectPosition: isMobile ? 'center top' : 'center center',
             zIndex: 0
           }}
