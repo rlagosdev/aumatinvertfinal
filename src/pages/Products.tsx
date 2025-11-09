@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
@@ -40,14 +41,20 @@ interface Product {
 
 const Products: React.FC = () => {
   const { cartItems } = useCart();
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Toutes les catégories');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Lire le paramètre de catégorie depuis l'URL dès le chargement
   useEffect(() => {
+    const categoryFromUrl = searchParams.get('categorie');
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl);
+    }
     fetchProducts();
-  }, []);
+  }, [searchParams]);
 
   const fetchProducts = async () => {
     try {
