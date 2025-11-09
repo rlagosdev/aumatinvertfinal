@@ -323,7 +323,7 @@ const HeroCarouselWithButtons: React.FC = () => {
       )}
 
       {/* Bouton Spécial (configurable) */}
-      <div className="absolute top-32 md:top-0 right-0 z-10 flex flex-col justify-start items-end text-white px-4 md:px-10 py-0">
+      <div className="absolute top-40 md:top-0 right-0 z-10 flex flex-col justify-start items-end text-white px-4 md:px-10 py-0">
         <div className="hero-btn-container">
           <Link to={specialButton.url} className="hero-btn">
             <span style={{ position: 'relative', zIndex: 10 }}>{specialButton.text}</span>
