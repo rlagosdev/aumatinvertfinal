@@ -235,7 +235,12 @@ const Hero: React.FC = () => {
 
   // Sinon afficher la vidéo hero
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-black pt-[220px] md:pt-0">
+    <section
+      className="relative w-full h-screen overflow-hidden bg-black"
+      style={{
+        paddingTop: isMobile ? '220px' : '0'
+      }}
+    >
       {/* Styles intégrés */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes sparkleAnim {
