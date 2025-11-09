@@ -31,10 +31,45 @@ const Annonces: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [showPopup, setShowPopup] = useState(true);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     fetchAnnonceConfig();
   }, []);
+
+  // Gérer le chargement de l'image
+  useEffect(() => {
+    if (config.imageUrl) {
+      setImageLoading(true);
+      setImageLoaded(false);
+
+      // Précharger l'image en arrière-plan
+      const img = new Image();
+      img.onload = () => {
+        console.log('✅ Image préchargée avec succès:', config.imageUrl);
+        setImageLoading(false);
+        setImageLoaded(true);
+      };
+      img.onerror = (error) => {
+        console.error('❌ Erreur de préchargement de l\'image:', config.imageUrl);
+        console.error('Détails de l\'erreur:', error);
+        console.error('Vérifiez que l\'URL est correcte et accessible');
+        setImageLoading(false);
+        setImageLoaded(false);
+      };
+      img.src = config.imageUrl;
+
+      // Timeout de sécurité au cas où onLoad ne se déclenche jamais
+      const timeout = setTimeout(() => {
+        console.warn('Timeout du chargement de l\'image');
+        setImageLoading(false);
+        setImageLoaded(true);
+      }, 10000); // 10 secondes max
+
+      return () => clearTimeout(timeout);
+    }
+  }, [config.imageUrl]);
 
   const fetchAnnonceConfig = async () => {
     try {
@@ -75,6 +110,11 @@ const Annonces: React.FC = () => {
       }
 
       setConfig(newConfig);
+      console.log('📋 Configuration annonce chargée:', {
+        title: newConfig.title,
+        imageUrl: newConfig.imageUrl,
+        hasImage: !!newConfig.imageUrl
+      });
     } catch (error) {
       console.error('Error fetching annonce config:', error);
     } finally {
@@ -99,13 +139,13 @@ const Annonces: React.FC = () => {
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div
-            className="relative max-w-4xl w-full rounded-2xl shadow-2xl overflow-hidden animate-scaleIn"
+            className="relative max-w-6xl w-full max-h-[95vh] rounded-2xl shadow-2xl overflow-auto animate-scaleIn"
             style={{ backgroundColor: config.backgroundColor, color: config.textColor }}
           >
             {/* Bouton fermer */}
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 z-10 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 transition-all hover:scale-110"
+              className="sticky top-4 right-4 float-right z-10 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 transition-all hover:scale-110"
               aria-label="Fermer"
             >
               <X className="h-6 w-6 text-gray-800" />
@@ -114,11 +154,29 @@ const Annonces: React.FC = () => {
             <div className="flex flex-col md:flex-row">
               {/* Image */}
               {config.imageUrl && (
-                <div className="md:w-1/2 h-64 md:h-auto">
+                <div className="md:w-1/2 flex-shrink-0 relative bg-gray-100 min-h-[300px]">
+                  {imageLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-site-primary mx-auto mb-2"></div>
+                        <p className="text-sm text-gray-600">Chargement de l'image...</p>
+                      </div>
+                    </div>
+                  )}
                   <img
                     src={config.imageUrl}
                     alt={config.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto relative z-0"
+                    onLoad={(e) => {
+                      console.log('Image chargée avec succès!');
+                      setImageLoading(false);
+                      setImageLoaded(true);
+                    }}
+                    onError={(e) => {
+                      console.error('Erreur de chargement de l\'image:', config.imageUrl);
+                      setImageLoading(false);
+                      setImageLoaded(false);
+                    }}
                   />
                 </div>
               )}

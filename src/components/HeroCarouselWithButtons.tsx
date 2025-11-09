@@ -176,16 +176,22 @@ const HeroCarouselWithButtons: React.FC = () => {
         }
 
         .hero-btn-container {
-          margin-top: 140px;
+          margin-top: 20px;
           margin-right: 0;
           position: relative;
           display: inline-block;
         }
 
+        @media (min-width: 768px) {
+          .hero-btn-container {
+            margin-top: 140px;
+          }
+        }
+
         .hero-btn {
           display: inline-block;
-          padding: 18px 50px;
-          font-size: 22px;
+          padding: 12px 24px;
+          font-size: 16px;
           font-weight: 700;
           text-decoration: none;
           background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
@@ -198,6 +204,13 @@ const HeroCarouselWithButtons: React.FC = () => {
           transition: all 0.4s ease;
           position: relative;
           overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+          .hero-btn {
+            padding: 18px 50px;
+            font-size: 22px;
+          }
         }
 
         .hero-btn::before {
@@ -310,7 +323,7 @@ const HeroCarouselWithButtons: React.FC = () => {
       )}
 
       {/* Bouton Spécial (configurable) */}
-      <div className="absolute top-0 right-0 z-10 flex flex-col justify-start items-end text-white px-10 py-0">
+      <div className="absolute top-20 md:top-0 right-0 z-10 flex flex-col justify-start items-end text-white px-4 md:px-10 py-0">
         <div className="hero-btn-container">
           <Link to={specialButton.url} className="hero-btn">
             <span style={{ position: 'relative', zIndex: 10 }}>{specialButton.text}</span>

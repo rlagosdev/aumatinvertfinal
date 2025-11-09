@@ -33,14 +33,103 @@ const HomeConfigManager: React.FC = () => {
   const [heroVideoUrl, setHeroVideoUrl] = useState<string>('/hero-video.mp4');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sitePages, setSitePages] = useState<Array<{ label: string; value: string }>>([
+    { label: 'Accueil', value: '/' },
+    { label: 'Produits', value: '/produits' },
+    { label: 'Boutique', value: '/boutique' },
+    { label: 'Événements', value: '/evenements' },
+    { label: 'Services', value: '/services' },
+    { label: 'À Propos', value: '/a-propos' },
+    { label: 'Panier', value: '/panier' },
+    { label: 'Annonces', value: '/annonces' },
+    // Catégories de produits
+    { label: 'Produits > Alternatives café', value: '/produits/Alternatives%20café' },
+    { label: 'Produits > Produits laitiers', value: '/produits/Produits%20laitiers' },
+    { label: 'Produits > Biscuits apéritifs', value: '/produits/Biscuits%20apéritifs' },
+    { label: 'Produits > Légumes', value: '/produits/Légumes' },
+    { label: 'Produits > Conserves de légumes', value: '/produits/Conserves%20de%20légumes' },
+    { label: 'Produits > Biscuits', value: '/produits/Biscuits' },
+    { label: 'Produits > Conserves de poisson', value: '/produits/Conserves%20de%20poisson' },
+    { label: 'Produits > Chocolats', value: '/produits/Chocolats' },
+    { label: 'Produits > Confitures', value: '/produits/Confitures' },
+    { label: 'Produits > Fruits', value: '/produits/Fruits' },
+    { label: 'Produits > Jus & boissons', value: '/produits/Jus%20%26%20boissons' },
+    // Catégories d'événements
+    { label: 'Événements > Plateaux fromage & crudités', value: '/evenements/Plateaux%20fromage%20%26%20crudités' },
+    { label: 'Événements > Autres plateaux & produits événementiels', value: '/evenements/Autres%20plateaux%20%26%20produits%20événementiels' },
+    { label: 'URL personnalisée', value: 'custom' }
+  ]);
 
   useEffect(() => {
+    fetchCategoriesAndUpdatePages();
     fetchConfigs();
     fetchCarouselImages();
     fetchHeroType();
     fetchButtonConfig();
     fetchHeroVideoUrl();
   }, []);
+
+  const fetchCategoriesAndUpdatePages = async () => {
+    try {
+      // Récupérer les catégories de produits
+      const { data: productCategories, error: productError } = await supabase
+        .from('categories')
+        .select('nom')
+        .eq('actif', true)
+        .order('nom');
+
+      if (productError) {
+        console.error('Error fetching product categories:', productError);
+      }
+
+      // Récupérer les catégories d'événements
+      const { data: eventCategories, error: eventError } = await supabase
+        .from('event_categories')
+        .select('nom')
+        .eq('actif', true)
+        .order('nom');
+
+      if (eventError) {
+        console.error('Error fetching event categories:', eventError);
+      }
+
+      // Construire la nouvelle liste de pages
+      const basePages = [
+        { label: 'Accueil', value: '/' },
+        { label: 'Produits', value: '/produits' },
+        { label: 'Boutique', value: '/boutique' },
+        { label: 'Événements', value: '/evenements' },
+        { label: 'Services', value: '/services' },
+        { label: 'À Propos', value: '/a-propos' },
+        { label: 'Panier', value: '/panier' },
+        { label: 'Annonces', value: '/annonces' }
+      ];
+
+      // Ajouter les catégories de produits avec le format /produits/CategoryName
+      const productPages = productCategories?.map(cat => ({
+        label: `Produits > ${cat.nom}`,
+        value: `/produits/${encodeURIComponent(cat.nom)}`
+      })) || [];
+
+      // Ajouter les catégories d'événements
+      const eventPages = eventCategories?.map(cat => ({
+        label: `Événements > ${cat.nom}`,
+        value: `/evenements/${encodeURIComponent(cat.nom)}`
+      })) || [];
+
+      // Combiner toutes les pages
+      const allPages = [
+        ...basePages,
+        ...productPages,
+        ...eventPages,
+        { label: 'URL personnalisée', value: 'custom' }
+      ];
+
+      setSitePages(allPages);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const fetchConfigs = async () => {
     try {
@@ -278,6 +367,21 @@ const HomeConfigManager: React.FC = () => {
     }
   };
 
+  const getSelectedSpecialButtonPage = () => {
+    const found = sitePages.find(page => page.value === specialButtonUrl);
+    return found ? found.value : 'custom';
+  };
+
+  const handleSpecialButtonPageSelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedValue = e.target.value;
+    if (selectedValue !== 'custom') {
+      setSpecialButtonUrl(selectedValue);
+      await handleButtonConfigUpdate('hero_special_button_url', selectedValue);
+    } else {
+      setSpecialButtonUrl('');
+    }
+  };
+
   const handleHeroVideoUpdate = async (newUrl: string) => {
     setSaving(true);
     try {
@@ -501,21 +605,44 @@ const HomeConfigManager: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lien du bouton
+                Page de destination
               </label>
-              <input
-                type="text"
-                value={specialButtonUrl}
-                onChange={(e) => setSpecialButtonUrl(e.target.value)}
-                onBlur={(e) => handleButtonConfigUpdate('hero_special_button_url', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
-                placeholder="/evenements"
+              <select
+                value={getSelectedSpecialButtonPage()}
+                onChange={handleSpecialButtonPageSelect}
                 disabled={saving}
-              />
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+              >
+                {sitePages.map((page) => (
+                  <option key={page.value} value={page.value}>
+                    {page.label}
+                  </option>
+                ))}
+              </select>
               <p className="text-xs text-gray-500 mt-1">
-                Exemples: "/evenements", "/produits", "/promotions", "/nouveautes"
+                Sélectionnez une page du site ou "URL personnalisée" pour entrer un lien personnalisé
               </p>
             </div>
+
+            {getSelectedSpecialButtonPage() === 'custom' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  URL personnalisée
+                </label>
+                <input
+                  type="text"
+                  value={specialButtonUrl}
+                  onChange={(e) => setSpecialButtonUrl(e.target.value)}
+                  onBlur={(e) => handleButtonConfigUpdate('hero_special_button_url', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-site-primary focus:border-transparent"
+                  placeholder="/ma-page ou https://example.com"
+                  disabled={saving}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Exemples: "/evenements", "/produits", "/promotions", "https://example.com"
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

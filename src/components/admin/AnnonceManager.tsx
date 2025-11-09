@@ -21,10 +21,101 @@ const AnnonceManager: React.FC = () => {
   const [button2, setButton2] = useState<AnnonceButton>({ text: 'Bouton 2', url: '/', isExternal: false, enabled: true });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [customUrl1, setCustomUrl1] = useState('');
+  const [customUrl2, setCustomUrl2] = useState('');
+  const [sitePages, setSitePages] = useState<Array<{ label: string; value: string }>>([
+    { label: 'Accueil', value: '/' },
+    { label: 'Produits', value: '/produits' },
+    { label: 'Boutique', value: '/boutique' },
+    { label: 'Événements', value: '/evenements' },
+    { label: 'Services', value: '/services' },
+    { label: 'À Propos', value: '/a-propos' },
+    { label: 'Panier', value: '/panier' },
+    { label: 'Annonces', value: '/annonces' },
+    // Catégories de produits
+    { label: 'Produits > Alternatives café', value: '/produits/Alternatives%20café' },
+    { label: 'Produits > Produits laitiers', value: '/produits/Produits%20laitiers' },
+    { label: 'Produits > Biscuits apéritifs', value: '/produits/Biscuits%20apéritifs' },
+    { label: 'Produits > Légumes', value: '/produits/Légumes' },
+    { label: 'Produits > Conserves de légumes', value: '/produits/Conserves%20de%20légumes' },
+    { label: 'Produits > Biscuits', value: '/produits/Biscuits' },
+    { label: 'Produits > Conserves de poisson', value: '/produits/Conserves%20de%20poisson' },
+    { label: 'Produits > Chocolats', value: '/produits/Chocolats' },
+    { label: 'Produits > Confitures', value: '/produits/Confitures' },
+    { label: 'Produits > Fruits', value: '/produits/Fruits' },
+    { label: 'Produits > Jus & boissons', value: '/produits/Jus%20%26%20boissons' },
+    // Catégories d'événements
+    { label: 'Événements > Plateaux fromage & crudités', value: '/evenements/Plateaux%20fromage%20%26%20crudités' },
+    { label: 'Événements > Autres plateaux & produits événementiels', value: '/evenements/Autres%20plateaux%20%26%20produits%20événementiels' },
+    { label: 'URL personnalisée', value: 'custom' }
+  ]);
 
   useEffect(() => {
+    fetchCategoriesAndUpdatePages();
     fetchAnnonceConfig();
   }, []);
+
+  const fetchCategoriesAndUpdatePages = async () => {
+    try {
+      // Récupérer les catégories de produits
+      const { data: productCategories, error: productError } = await supabase
+        .from('categories')
+        .select('nom')
+        .eq('actif', true)
+        .order('nom');
+
+      if (productError) {
+        console.error('Error fetching product categories:', productError);
+      }
+
+      // Récupérer les catégories d'événements
+      const { data: eventCategories, error: eventError } = await supabase
+        .from('event_categories')
+        .select('nom')
+        .eq('actif', true)
+        .order('nom');
+
+      if (eventError) {
+        console.error('Error fetching event categories:', eventError);
+      }
+
+      // Construire la nouvelle liste de pages
+      const basePages = [
+        { label: 'Accueil', value: '/' },
+        { label: 'Produits', value: '/produits' },
+        { label: 'Boutique', value: '/boutique' },
+        { label: 'Événements', value: '/evenements' },
+        { label: 'Services', value: '/services' },
+        { label: 'À Propos', value: '/a-propos' },
+        { label: 'Panier', value: '/panier' },
+        { label: 'Annonces', value: '/annonces' }
+      ];
+
+      // Ajouter les catégories de produits avec le format /produits/CategoryName
+      const productPages = productCategories?.map(cat => ({
+        label: `Produits > ${cat.nom}`,
+        value: `/produits/${encodeURIComponent(cat.nom)}`
+      })) || [];
+
+      // Ajouter les catégories d'événements
+      const eventPages = eventCategories?.map(cat => ({
+        label: `Événements > ${cat.nom}`,
+        value: `/evenements/${encodeURIComponent(cat.nom)}`
+      })) || [];
+
+      // Combiner toutes les pages
+      const allPages = [
+        ...basePages,
+        ...productPages,
+        ...eventPages,
+        { label: 'URL personnalisée', value: 'custom' }
+      ];
+
+      setSitePages(allPages);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const fetchAnnonceConfig = async () => {
     try {
@@ -58,9 +149,19 @@ const AnnonceManager: React.FC = () => {
           const buttons = JSON.parse(buttonsData);
           if (buttons[0]) {
             setButton1(buttons[0]);
+            // Si l'URL n'est pas dans les pages prédéfinies, c'est une URL personnalisée
+            const isCustom1 = !sitePages.some(page => page.value === buttons[0].url);
+            if (isCustom1) {
+              setCustomUrl1(buttons[0].url);
+            }
           }
           if (buttons[1]) {
             setButton2(buttons[1]);
+            // Si l'URL n'est pas dans les pages prédéfinies, c'est une URL personnalisée
+            const isCustom2 = !sitePages.some(page => page.value === buttons[1].url);
+            if (isCustom2) {
+              setCustomUrl2(buttons[1].url);
+            }
           }
         } catch (e) {
           console.error('Error parsing buttons:', e);
@@ -128,6 +229,144 @@ const AnnonceManager: React.FC = () => {
 
   const updateButton2 = (field: keyof AnnonceButton, value: string | boolean) => {
     setButton2({ ...button2, [field]: value });
+  };
+
+  const handlePageSelect1 = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedValue = e.target.value;
+
+    let updatedButton1: AnnonceButton;
+
+    if (selectedValue === 'custom') {
+      setCustomUrl1('');
+      updatedButton1 = { ...button1, url: '' };
+      setButton1(updatedButton1);
+    } else {
+      setCustomUrl1('');
+      updatedButton1 = {
+        ...button1,
+        url: selectedValue,
+        isExternal: !selectedValue.startsWith('/')
+      };
+      setButton1(updatedButton1);
+
+      // Sauvegarder automatiquement avec les nouvelles valeurs
+      setSaving(true);
+      try {
+        const buttons = [updatedButton1, button2];
+        const settings = [
+          { key: 'annonce_title', value: title, description: 'Titre de l\'annonce' },
+          { key: 'annonce_description', value: description, description: 'Description de l\'annonce' },
+          { key: 'annonce_image', value: imageUrl, description: 'Image de l\'annonce' },
+          { key: 'annonce_buttons', value: JSON.stringify(buttons), description: 'Boutons de l\'annonce' },
+          { key: 'annonce_bg_color', value: backgroundColor, description: 'Couleur de fond de l\'annonce' },
+          { key: 'annonce_text_color', value: textColor, description: 'Couleur du texte de l\'annonce' }
+        ];
+
+        for (const setting of settings) {
+          const { data: existing } = await supabase
+            .from('site_settings')
+            .select('id')
+            .eq('setting_key', setting.key)
+            .single();
+
+          if (existing) {
+            await supabase
+              .from('site_settings')
+              .update({ setting_value: setting.value })
+              .eq('setting_key', setting.key);
+          } else {
+            await supabase
+              .from('site_settings')
+              .insert([{
+                setting_key: setting.key,
+                setting_value: setting.value,
+                description: setting.description
+              }]);
+          }
+        }
+
+        toast.success('Page de destination mise à jour !');
+      } catch (error) {
+        console.error('Error saving:', error);
+        toast.error('Erreur lors de la sauvegarde');
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
+  const handlePageSelect2 = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedValue = e.target.value;
+
+    let updatedButton2: AnnonceButton;
+
+    if (selectedValue === 'custom') {
+      setCustomUrl2('');
+      updatedButton2 = { ...button2, url: '' };
+      setButton2(updatedButton2);
+    } else {
+      setCustomUrl2('');
+      updatedButton2 = {
+        ...button2,
+        url: selectedValue,
+        isExternal: !selectedValue.startsWith('/')
+      };
+      setButton2(updatedButton2);
+
+      // Sauvegarder automatiquement avec les nouvelles valeurs
+      setSaving(true);
+      try {
+        const buttons = [button1, updatedButton2];
+        const settings = [
+          { key: 'annonce_title', value: title, description: 'Titre de l\'annonce' },
+          { key: 'annonce_description', value: description, description: 'Description de l\'annonce' },
+          { key: 'annonce_image', value: imageUrl, description: 'Image de l\'annonce' },
+          { key: 'annonce_buttons', value: JSON.stringify(buttons), description: 'Boutons de l\'annonce' },
+          { key: 'annonce_bg_color', value: backgroundColor, description: 'Couleur de fond de l\'annonce' },
+          { key: 'annonce_text_color', value: textColor, description: 'Couleur du texte de l\'annonce' }
+        ];
+
+        for (const setting of settings) {
+          const { data: existing } = await supabase
+            .from('site_settings')
+            .select('id')
+            .eq('setting_key', setting.key)
+            .single();
+
+          if (existing) {
+            await supabase
+              .from('site_settings')
+              .update({ setting_value: setting.value })
+              .eq('setting_key', setting.key);
+          } else {
+            await supabase
+              .from('site_settings')
+              .insert([{
+                setting_key: setting.key,
+                setting_value: setting.value,
+                description: setting.description
+              }]);
+          }
+        }
+
+        toast.success('Page de destination mise à jour !');
+      } catch (error) {
+        console.error('Error saving:', error);
+        toast.error('Erreur lors de la sauvegarde');
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
+  const getSelectedPage1 = () => {
+    const found = sitePages.find(page => page.value === button1.url);
+    return found ? found.value : 'custom';
+  };
+
+  const getSelectedPage2 = () => {
+    const found = sitePages.find(page => page.value === button2.url);
+    return found ? found.value : 'custom';
   };
 
   const copyAnnonceLink = () => {
@@ -313,7 +552,7 @@ const AnnonceManager: React.FC = () => {
                   </label>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-3 mb-3">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
                       Texte du bouton
@@ -330,29 +569,51 @@ const AnnonceManager: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      URL
+                      Page de destination
                     </label>
-                    <input
-                      type="text"
-                      value={button1.url}
-                      onChange={(e) => updateButton1('url', e.target.value)}
+                    <select
+                      value={getSelectedPage1()}
+                      onChange={handlePageSelect1}
                       disabled={!button1.enabled}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-500"
-                      placeholder="/produits ou https://..."
-                    />
+                    >
+                      {sitePages.map((page) => (
+                        <option key={page.value} value={page.value}>
+                          {page.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
 
-                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={button1.isExternal}
-                    onChange={(e) => updateButton1('isExternal', e.target.checked)}
-                    disabled={!button1.enabled}
-                    className="rounded border-gray-300 text-site-primary focus:ring-site-primary disabled:bg-gray-100"
-                  />
-                  Lien externe (s'ouvre dans un nouvel onglet)
-                </label>
+                  {getSelectedPage1() === 'custom' && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        URL personnalisée
+                      </label>
+                      <input
+                        type="text"
+                        value={button1.url}
+                        onChange={(e) => updateButton1('url', e.target.value)}
+                        disabled={!button1.enabled}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                        placeholder="/ma-page ou https://example.com"
+                      />
+                    </div>
+                  )}
+
+                  {getSelectedPage1() === 'custom' && (
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={button1.isExternal}
+                        onChange={(e) => updateButton1('isExternal', e.target.checked)}
+                        disabled={!button1.enabled}
+                        className="rounded border-gray-300 text-site-primary focus:ring-site-primary disabled:bg-gray-100"
+                      />
+                      Lien externe (s'ouvre dans un nouvel onglet)
+                    </label>
+                  )}
+                </div>
               </div>
 
               {/* Bouton 2 */}
@@ -372,7 +633,7 @@ const AnnonceManager: React.FC = () => {
                   </label>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-3 mb-3">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
                       Texte du bouton
@@ -389,29 +650,51 @@ const AnnonceManager: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      URL
+                      Page de destination
                     </label>
-                    <input
-                      type="text"
-                      value={button2.url}
-                      onChange={(e) => updateButton2('url', e.target.value)}
+                    <select
+                      value={getSelectedPage2()}
+                      onChange={handlePageSelect2}
                       disabled={!button2.enabled}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-500"
-                      placeholder="/panier ou https://..."
-                    />
+                    >
+                      {sitePages.map((page) => (
+                        <option key={page.value} value={page.value}>
+                          {page.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
 
-                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={button2.isExternal}
-                    onChange={(e) => updateButton2('isExternal', e.target.checked)}
-                    disabled={!button2.enabled}
-                    className="rounded border-gray-300 text-site-primary focus:ring-site-primary disabled:bg-gray-100"
-                  />
-                  Lien externe (s'ouvre dans un nouvel onglet)
-                </label>
+                  {getSelectedPage2() === 'custom' && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        URL personnalisée
+                      </label>
+                      <input
+                        type="text"
+                        value={button2.url}
+                        onChange={(e) => updateButton2('url', e.target.value)}
+                        disabled={!button2.enabled}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                        placeholder="/ma-page ou https://example.com"
+                      />
+                    </div>
+                  )}
+
+                  {getSelectedPage2() === 'custom' && (
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={button2.isExternal}
+                        onChange={(e) => updateButton2('isExternal', e.target.checked)}
+                        disabled={!button2.enabled}
+                        className="rounded border-gray-300 text-site-primary focus:ring-site-primary disabled:bg-gray-100"
+                      />
+                      Lien externe (s'ouvre dans un nouvel onglet)
+                    </label>
+                  )}
+                </div>
               </div>
             </div>
           </div>

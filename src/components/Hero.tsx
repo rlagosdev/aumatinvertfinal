@@ -167,11 +167,17 @@ const Hero: React.FC = () => {
         }
 
         .hero-btn-container {
-          margin-top: 140px;
+          margin-top: 20px;
           margin-right: 0;
           position: relative;
           display: inline-block;
           z-index: 10;
+        }
+
+        @media (min-width: 768px) {
+          .hero-btn-container {
+            margin-top: 140px;
+          }
         }
 
         .hero-btn-container::before {
@@ -191,8 +197,8 @@ const Hero: React.FC = () => {
 
         .hero-btn {
           display: inline-block;
-          padding: 16px 48px;
-          font-size: 18px;
+          padding: 12px 24px;
+          font-size: 16px;
           font-weight: 600;
           color: white;
           background: transparent;
@@ -204,6 +210,13 @@ const Hero: React.FC = () => {
           overflow: visible;
           z-index: 1;
           box-sizing: border-box;
+        }
+
+        @media (min-width: 768px) {
+          .hero-btn {
+            padding: 16px 48px;
+            font-size: 18px;
+          }
         }
 
         .hero-btn::before {
@@ -306,7 +319,7 @@ const Hero: React.FC = () => {
       <div className="absolute top-0 left-0 w-full h-full bg-black opacity-0" style={{ pointerEvents: 'none' }}></div>
 
       {/* Bouton Spécial (configurable) */}
-      <div className="absolute top-0 right-0 z-10 flex flex-col justify-start items-end text-white px-10 py-0">
+      <div className="absolute top-20 md:top-0 right-0 z-10 flex flex-col justify-start items-end text-white px-4 md:px-10 py-0">
         <div className="hero-btn-container">
           <Link to={specialButton.url} className="hero-btn">
             <span style={{ position: 'relative', zIndex: 10 }}>{specialButton.text}</span>
