@@ -13,16 +13,31 @@ interface HeroButton {
   url: string;
 }
 
-const HeroCarouselWithButtons: React.FC = () => {
+interface HeroCarouselWithButtonsProps {
+  carouselImages?: string[];
+}
+
+const HeroCarouselWithButtons: React.FC<HeroCarouselWithButtonsProps> = ({ carouselImages: propImages }) => {
   const [images, setImages] = useState<CarouselImage[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [specialButton, setSpecialButton] = useState<HeroButton>({ text: 'Spéciale Fêtes', url: '/evenements' });
 
   useEffect(() => {
-    fetchCarouselImages();
+    if (propImages && propImages.length > 0) {
+      // Utiliser les images passées en props
+      const formattedImages = propImages.map((url, idx) => ({
+        url,
+        alt: `Carousel image ${idx + 1}`
+      }));
+      setImages(formattedImages);
+      setLoading(false);
+    } else {
+      // Sinon, charger depuis la base de données
+      fetchCarouselImages();
+    }
     fetchButtonConfig();
-  }, []);
+  }, [propImages]);
 
   useEffect(() => {
     if (images.length > 1) {

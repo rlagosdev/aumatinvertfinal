@@ -3,6 +3,7 @@ import { Home, Save, AlertCircle, Leaf, Heart, Users, Image as ImageIcon } from 
 import { supabase } from '../../supabase/client';
 import { toast } from 'react-toastify';
 import ImageUploadField from './ImageUploadField';
+import VideoUploadField from './VideoUploadField';
 
 interface HomeConfig {
   id: string;
@@ -27,10 +28,26 @@ const HomeConfigManager: React.FC = () => {
     carousel_image_3: '',
     carousel_image_4: ''
   });
+  const [carouselImagesDesktop, setCarouselImagesDesktop] = useState<{[key: string]: string}>({
+    carousel_image_desktop_1: '',
+    carousel_image_desktop_2: '',
+    carousel_image_desktop_3: '',
+    carousel_image_desktop_4: ''
+  });
+  const [carouselImagesMobile, setCarouselImagesMobile] = useState<{[key: string]: string}>({
+    carousel_image_mobile_1: '',
+    carousel_image_mobile_2: '',
+    carousel_image_mobile_3: '',
+    carousel_image_mobile_4: ''
+  });
   const [heroType, setHeroType] = useState<'video' | 'carousel'>('video');
+  const [heroTypeDesktop, setHeroTypeDesktop] = useState<'video' | 'carousel'>('video');
+  const [heroTypeMobile, setHeroTypeMobile] = useState<'video' | 'carousel'>('carousel');
   const [specialButtonText, setSpecialButtonText] = useState<string>('Spéciale Fêtes');
   const [specialButtonUrl, setSpecialButtonUrl] = useState<string>('/evenements');
   const [heroVideoUrl, setHeroVideoUrl] = useState<string>('/hero-video.mp4');
+  const [heroVideoUrlDesktop, setHeroVideoUrlDesktop] = useState<string>('/hero-video.mp4');
+  const [heroVideoUrlMobile, setHeroVideoUrlMobile] = useState<string>('/hero-video-mobile.mp4');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sitePages, setSitePages] = useState<Array<{ label: string; value: string }>>([
@@ -64,9 +81,12 @@ const HomeConfigManager: React.FC = () => {
     fetchCategoriesAndUpdatePages();
     fetchConfigs();
     fetchCarouselImages();
+    fetchCarouselImagesByDevice();
     fetchHeroType();
+    fetchHeroTypeByDevice();
     fetchButtonConfig();
     fetchHeroVideoUrl();
+    fetchHeroVideoUrlByDevice();
   }, []);
 
   const fetchCategoriesAndUpdatePages = async () => {
@@ -185,6 +205,27 @@ const HomeConfigManager: React.FC = () => {
     }
   };
 
+  const fetchHeroTypeByDevice = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['home_hero_type_desktop', 'home_hero_type_mobile']);
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        const desktopType = data.find(s => s.setting_key === 'home_hero_type_desktop')?.setting_value;
+        const mobileType = data.find(s => s.setting_key === 'home_hero_type_mobile')?.setting_value;
+
+        if (desktopType) setHeroTypeDesktop(desktopType as 'video' | 'carousel');
+        if (mobileType) setHeroTypeMobile(mobileType as 'video' | 'carousel');
+      }
+    } catch (error) {
+      console.error('Error fetching hero type by device:', error);
+    }
+  };
+
   const fetchButtonConfig = async () => {
     try {
       const { data, error } = await supabase
@@ -228,6 +269,63 @@ const HomeConfigManager: React.FC = () => {
     }
   };
 
+  const fetchHeroVideoUrlByDevice = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['hero_video_url_desktop', 'hero_video_url_mobile']);
+
+      if (error && error.code !== 'PGRST116') {
+        console.warn('Error fetching device-specific video URLs:', error);
+        return;
+      }
+
+      if (data) {
+        const desktopUrl = data.find(s => s.setting_key === 'hero_video_url_desktop')?.setting_value;
+        const mobileUrl = data.find(s => s.setting_key === 'hero_video_url_mobile')?.setting_value;
+
+        if (desktopUrl) setHeroVideoUrlDesktop(desktopUrl);
+        if (mobileUrl) setHeroVideoUrlMobile(mobileUrl);
+      }
+    } catch (error) {
+      console.warn('Error fetching device-specific video URLs:', error);
+    }
+  };
+
+  const fetchCarouselImagesByDevice = async () => {
+    try {
+      const desktopKeys = ['carousel_image_desktop_1', 'carousel_image_desktop_2', 'carousel_image_desktop_3', 'carousel_image_desktop_4'];
+      const mobileKeys = ['carousel_image_mobile_1', 'carousel_image_mobile_2', 'carousel_image_mobile_3', 'carousel_image_mobile_4'];
+
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*')
+        .in('setting_key', [...desktopKeys, ...mobileKeys]);
+
+      if (error && error.code !== 'PGRST116') {
+        console.warn('Error fetching device-specific carousel images:', error);
+        return;
+      }
+
+      const desktopImages: {[key: string]: string} = {};
+      const mobileImages: {[key: string]: string} = {};
+
+      data?.forEach(setting => {
+        if (desktopKeys.includes(setting.setting_key)) {
+          desktopImages[setting.setting_key] = setting.setting_value;
+        } else if (mobileKeys.includes(setting.setting_key)) {
+          mobileImages[setting.setting_key] = setting.setting_value;
+        }
+      });
+
+      setCarouselImagesDesktop(desktopImages);
+      setCarouselImagesMobile(mobileImages);
+    } catch (error) {
+      console.warn('Error fetching device-specific carousel images:', error);
+    }
+  };
+
   const handleHeroTypeChange = async (newType: 'video' | 'carousel') => {
     setSaving(true);
     try {
@@ -263,6 +361,55 @@ const HomeConfigManager: React.FC = () => {
       toast.success(`Hero changé en mode ${newType === 'video' ? 'Vidéo' : 'Carrousel'}`);
     } catch (error) {
       console.error('Error updating hero type:', error);
+      toast.error('Erreur lors du changement de mode');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleHeroTypeByDeviceChange = async (device: 'desktop' | 'mobile', newType: 'video' | 'carousel') => {
+    setSaving(true);
+    try {
+      const settingKey = device === 'desktop' ? 'home_hero_type_desktop' : 'home_hero_type_mobile';
+
+      // Vérifier si la clé existe
+      const { data: existing } = await supabase
+        .from('site_settings')
+        .select('id')
+        .eq('setting_key', settingKey)
+        .single();
+
+      if (existing) {
+        // Update
+        const { error } = await supabase
+          .from('site_settings')
+          .update({ setting_value: newType })
+          .eq('setting_key', settingKey);
+
+        if (error) throw error;
+      } else {
+        // Insert
+        const { error } = await supabase
+          .from('site_settings')
+          .insert([{
+            setting_key: settingKey,
+            setting_value: newType,
+            description: `Type de hero sur ${device === 'desktop' ? 'ordinateur' : 'mobile'} (video ou carousel)`
+          }]);
+
+        if (error) throw error;
+      }
+
+      // Update local state
+      if (device === 'desktop') {
+        setHeroTypeDesktop(newType);
+      } else {
+        setHeroTypeMobile(newType);
+      }
+
+      toast.success(`Hero ${device === 'desktop' ? 'PC' : 'Mobile'} changé en mode ${newType === 'video' ? 'Vidéo' : 'Carrousel'}`);
+    } catch (error) {
+      console.error('Error updating hero type by device:', error);
       toast.error('Erreur lors du changement de mode');
     } finally {
       setSaving(false);
@@ -423,6 +570,89 @@ const HomeConfigManager: React.FC = () => {
     }
   };
 
+  const handleHeroVideoUpdateByDevice = async (device: 'desktop' | 'mobile', newUrl: string) => {
+    setSaving(true);
+    try {
+      const settingKey = device === 'desktop' ? 'hero_video_url_desktop' : 'hero_video_url_mobile';
+
+      const { data: existing } = await supabase
+        .from('site_settings')
+        .select('id')
+        .eq('setting_key', settingKey)
+        .single();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('site_settings')
+          .update({ setting_value: newUrl })
+          .eq('setting_key', settingKey);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('site_settings')
+          .insert([{
+            setting_key: settingKey,
+            setting_value: newUrl,
+            description: `URL de la vidéo hero pour ${device === 'desktop' ? 'ordinateur' : 'mobile'}`
+          }]);
+
+        if (error) throw error;
+      }
+
+      if (device === 'desktop') {
+        setHeroVideoUrlDesktop(newUrl);
+      } else {
+        setHeroVideoUrlMobile(newUrl);
+      }
+
+      toast.success(`Vidéo hero ${device === 'desktop' ? 'PC' : 'Mobile'} mise à jour`);
+    } catch (error) {
+      console.error('Error updating device-specific hero video:', error);
+      toast.error('Erreur lors de la mise à jour de la vidéo');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCarouselImageUpdateByDevice = async (device: 'desktop' | 'mobile', imageNumber: number, newUrl: string) => {
+    setSaving(true);
+    try {
+      const imageKey = `carousel_image_${device}_${imageNumber}`;
+
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert({
+          setting_key: imageKey,
+          setting_value: newUrl,
+          description: `Image ${imageNumber} du carrousel ${device === 'desktop' ? 'PC' : 'Mobile'}`
+        }, {
+          onConflict: 'setting_key'
+        });
+
+      if (error) throw error;
+
+      if (device === 'desktop') {
+        setCarouselImagesDesktop(prev => ({
+          ...prev,
+          [imageKey]: newUrl
+        }));
+      } else {
+        setCarouselImagesMobile(prev => ({
+          ...prev,
+          [imageKey]: newUrl
+        }));
+      }
+
+      toast.success(`Image carrousel ${device === 'desktop' ? 'PC' : 'Mobile'} mise à jour`);
+    } catch (error) {
+      console.error('Error updating device-specific carousel image:', error);
+      toast.error('Erreur lors de la mise à jour de l\'image');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const groupConfigs = (): GroupedConfigs => {
     return {
       hero: configs.filter(c => c.config_key.startsWith('hero_') && !c.config_key.includes('cta')),
@@ -463,56 +693,127 @@ const HomeConfigManager: React.FC = () => {
           </div>
         </div>
 
-        {/* Sélecteur de type de Hero */}
+        {/* Sélecteur de type de Hero par appareil */}
         <div className="bg-gradient-to-r from-purple-50 to-cyan-50 border border-purple-200 rounded-lg p-6 mb-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Type de bannière d'accueil</h3>
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => handleHeroTypeChange('video')}
-              disabled={saving}
-              className={`flex-1 px-6 py-4 rounded-lg border-2 transition-all ${
-                heroType === 'video'
-                  ? 'border-site-primary bg-white shadow-md'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <div className="flex flex-col items-center">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                  heroType === 'video' ? 'bg-site-primary' : 'bg-gray-200'
-                }`}>
-                  <svg className={`w-6 h-6 ${heroType === 'video' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className={`font-semibold ${heroType === 'video' ? 'text-site-primary' : 'text-gray-700'}`}>
-                  Vidéo Hero
-                </span>
-                <span className="text-xs text-gray-500 mt-1">Vidéo en arrière-plan</span>
-              </div>
-            </button>
+          <h3 className="font-semibold text-gray-900 mb-4">Type de bannière d'accueil par appareil</h3>
 
-            <button
-              onClick={() => handleHeroTypeChange('carousel')}
-              disabled={saving}
-              className={`flex-1 px-6 py-4 rounded-lg border-2 transition-all ${
-                heroType === 'carousel'
-                  ? 'border-site-primary bg-white shadow-md'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <div className="flex flex-col items-center">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                  heroType === 'carousel' ? 'bg-site-primary' : 'bg-gray-200'
-                }`}>
-                  <ImageIcon className={`w-6 h-6 ${heroType === 'carousel' ? 'text-white' : 'text-gray-600'}`} />
+          {/* Desktop */}
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" strokeWidth="2"/>
+                <line x1="8" y1="21" x2="16" y2="21" strokeWidth="2"/>
+                <line x1="12" y1="17" x2="12" y2="21" strokeWidth="2"/>
+              </svg>
+              Ordinateur / PC
+            </h4>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => handleHeroTypeByDeviceChange('desktop', 'video')}
+                disabled={saving}
+                className={`flex-1 px-6 py-4 rounded-lg border-2 transition-all ${
+                  heroTypeDesktop === 'video'
+                    ? 'border-site-primary bg-white shadow-md'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="flex flex-col items-center">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    heroTypeDesktop === 'video' ? 'bg-site-primary' : 'bg-gray-200'
+                  }`}>
+                    <svg className={`w-6 h-6 ${heroTypeDesktop === 'video' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span className={`font-semibold ${heroTypeDesktop === 'video' ? 'text-site-primary' : 'text-gray-700'}`}>
+                    Vidéo Hero
+                  </span>
+                  <span className="text-xs text-gray-500 mt-1">Vidéo en arrière-plan</span>
                 </div>
-                <span className={`font-semibold ${heroType === 'carousel' ? 'text-site-primary' : 'text-gray-700'}`}>
-                  Carrousel d'images
-                </span>
-                <span className="text-xs text-gray-500 mt-1">Diaporama d'images</span>
-              </div>
-            </button>
+              </button>
+
+              <button
+                onClick={() => handleHeroTypeByDeviceChange('desktop', 'carousel')}
+                disabled={saving}
+                className={`flex-1 px-6 py-4 rounded-lg border-2 transition-all ${
+                  heroTypeDesktop === 'carousel'
+                    ? 'border-site-primary bg-white shadow-md'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="flex flex-col items-center">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    heroTypeDesktop === 'carousel' ? 'bg-site-primary' : 'bg-gray-200'
+                  }`}>
+                    <ImageIcon className={`w-6 h-6 ${heroTypeDesktop === 'carousel' ? 'text-white' : 'text-gray-600'}`} />
+                  </div>
+                  <span className={`font-semibold ${heroTypeDesktop === 'carousel' ? 'text-site-primary' : 'text-gray-700'}`}>
+                    Carrousel d'images
+                  </span>
+                  <span className="text-xs text-gray-500 mt-1">Diaporama d'images</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" strokeWidth="2"/>
+                <line x1="12" y1="18" x2="12" y2="18" strokeWidth="2"/>
+              </svg>
+              Mobile / Portable
+            </h4>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => handleHeroTypeByDeviceChange('mobile', 'video')}
+                disabled={saving}
+                className={`flex-1 px-6 py-4 rounded-lg border-2 transition-all ${
+                  heroTypeMobile === 'video'
+                    ? 'border-site-primary bg-white shadow-md'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="flex flex-col items-center">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    heroTypeMobile === 'video' ? 'bg-site-primary' : 'bg-gray-200'
+                  }`}>
+                    <svg className={`w-6 h-6 ${heroTypeMobile === 'video' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span className={`font-semibold ${heroTypeMobile === 'video' ? 'text-site-primary' : 'text-gray-700'}`}>
+                    Vidéo Hero
+                  </span>
+                  <span className="text-xs text-gray-500 mt-1">Vidéo en arrière-plan</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleHeroTypeByDeviceChange('mobile', 'carousel')}
+                disabled={saving}
+                className={`flex-1 px-6 py-4 rounded-lg border-2 transition-all ${
+                  heroTypeMobile === 'carousel'
+                    ? 'border-site-primary bg-white shadow-md'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="flex flex-col items-center">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    heroTypeMobile === 'carousel' ? 'bg-site-primary' : 'bg-gray-200'
+                  }`}>
+                    <ImageIcon className={`w-6 h-6 ${heroTypeMobile === 'carousel' ? 'text-white' : 'text-gray-600'}`} />
+                  </div>
+                  <span className={`font-semibold ${heroTypeMobile === 'carousel' ? 'text-site-primary' : 'text-gray-700'}`}>
+                    Carrousel d'images
+                  </span>
+                  <span className="text-xs text-gray-500 mt-1">Diaporama d'images</span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -522,17 +823,20 @@ const HomeConfigManager: React.FC = () => {
             <div>
               <h3 className="font-semibold text-blue-900 mb-1">Comment utiliser ?</h3>
               <p className="text-sm text-blue-800">
-                {heroType === 'video'
-                  ? 'Mode Vidéo Hero activé. Les textes de la section Hero et des boutons d\'action s\'afficheront par-dessus la vidéo.'
-                  : 'Mode Carrousel activé. Modifiez les images du carrousel ci-dessous et les textes de la section Hero.'}
-                {' '}Les modifications sont sauvegardées automatiquement lorsque vous quittez un champ.
+                Vous pouvez configurer des bannières différentes pour ordinateur et mobile. Actuellement configuré :
+                <br />
+                <strong>PC:</strong> {heroTypeDesktop === 'video' ? 'Vidéo Hero' : 'Carrousel d\'images'}
+                <br />
+                <strong>Mobile:</strong> {heroTypeMobile === 'video' ? 'Vidéo Hero' : 'Carrousel d\'images'}
+                <br />
+                Les modifications sont sauvegardées automatiquement lorsque vous sélectionnez un mode.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Section Vidéo Hero - Affichée uniquement si mode vidéo */}
-        {heroType === 'video' && (
+        {/* Section Vidéo Hero - PC */}
+        {heroTypeDesktop === 'video' && (
         <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
             <span className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full flex items-center justify-center text-sm mr-2">
@@ -541,37 +845,52 @@ const HomeConfigManager: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </span>
-            Vidéo du Hero
+            Vidéo Hero - Ordinateur / PC
           </h3>
           <p className="text-sm text-gray-600 mb-4 pl-10">
-            Choisissez la vidéo qui sera affichée en arrière-plan de votre page d'accueil.
+            Vidéo qui sera affichée en arrière-plan sur ordinateur.
           </p>
           <div className="pl-10">
-            <ImageUploadField
-              label="Vidéo Hero (MP4, WebM)"
-              value={heroVideoUrl}
-              onChange={(url) => handleHeroVideoUpdate(url)}
-              placeholder="/hero-video.mp4 ou https://example.com/video.mp4"
-              showPreview={false}
+            <VideoUploadField
+              label="Vidéo Hero PC (MP4, WebM)"
+              value={heroVideoUrlDesktop}
+              onChange={(url) => handleHeroVideoUpdateByDevice('desktop', url)}
+              placeholder="/hero-video-desktop.mp4 ou https://example.com/video.mp4"
               accept="video/*"
             />
             <p className="text-xs text-gray-500 mt-2">
               Formats acceptés: MP4, WebM. Recommandé: 1920x1080 ou supérieur, optimisé pour le web.
             </p>
-            {heroVideoUrl && (
-              <div className="mt-4 bg-white rounded-lg p-4 border border-gray-200">
-                <p className="text-sm font-medium text-gray-700 mb-2">Aperçu de la vidéo:</p>
-                <video
-                  src={heroVideoUrl}
-                  className="w-full max-w-2xl rounded-lg"
-                  style={{ maxHeight: '300px', objectFit: 'cover' }}
-                  controls
-                  muted
-                >
-                  Votre navigateur ne supporte pas la lecture de vidéos.
-                </video>
-              </div>
-            )}
+          </div>
+        </div>
+        )}
+
+        {/* Section Vidéo Hero - Mobile */}
+        {heroTypeMobile === 'video' && (
+        <div className="mb-8 bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <span className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-full flex items-center justify-center text-sm mr-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+            Vidéo Hero - Mobile / Portable
+          </h3>
+          <p className="text-sm text-gray-600 mb-4 pl-10">
+            Vidéo qui sera affichée en arrière-plan sur mobile.
+          </p>
+          <div className="pl-10">
+            <VideoUploadField
+              label="Vidéo Hero Mobile (MP4, WebM)"
+              value={heroVideoUrlMobile}
+              onChange={(url) => handleHeroVideoUpdateByDevice('mobile', url)}
+              placeholder="/hero-video-mobile.mp4 ou https://example.com/video.mp4"
+              accept="video/*"
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Formats acceptés: MP4, WebM. Recommandé: Format portrait ou carré pour mobile.
+            </p>
           </div>
         </div>
         )}
@@ -646,20 +965,55 @@ const HomeConfigManager: React.FC = () => {
           </div>
         </div>
 
-        {/* Section Carrousel - Affichée uniquement si mode carrousel */}
-        {heroType === 'carousel' && (
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center border-b pb-2">
-            <span className="w-8 h-8 bg-site-primary text-white rounded-full flex items-center justify-center text-sm mr-2">0</span>
-            Images du carrousel d'accueil
+        {/* Section Carrousel - PC */}
+        {heroTypeDesktop === 'carousel' && (
+        <div className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <span className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full flex items-center justify-center text-sm mr-2">
+              <ImageIcon className="w-5 h-5" />
+            </span>
+            Images du Carrousel - Ordinateur / PC
           </h3>
+          <p className="text-sm text-gray-600 mb-4 pl-10">
+            Images qui seront affichées dans le carrousel sur ordinateur.
+          </p>
           <div className="grid md:grid-cols-2 gap-6 pl-10">
             {[1, 2, 3, 4].map((num) => (
-              <div key={`carousel_image_${num}`}>
+              <div key={`carousel_image_desktop_${num}`}>
                 <ImageUploadField
-                  label={`Image ${num} du carrousel`}
-                  value={carouselImages[`carousel_image_${num}`] || ''}
-                  onChange={(url) => handleCarouselImageUpdate(`carousel_image_${num}`, url)}
+                  label={`Image ${num} du carrousel PC`}
+                  value={carouselImagesDesktop[`carousel_image_desktop_${num}`] || ''}
+                  onChange={(url) => handleCarouselImageUpdateByDevice('desktop', num, url)}
+                  placeholder="https://example.com/image.jpg"
+                  showPreview={true}
+                  previewClassName="aspect-video h-48"
+                  cropAspect={16 / 9}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        )}
+
+        {/* Section Carrousel - Mobile */}
+        {heroTypeMobile === 'carousel' && (
+        <div className="mb-8 bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <span className="w-8 h-8 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full flex items-center justify-center text-sm mr-2">
+              <ImageIcon className="w-5 h-5" />
+            </span>
+            Images du Carrousel - Mobile / Portable
+          </h3>
+          <p className="text-sm text-gray-600 mb-4 pl-10">
+            Images qui seront affichées dans le carrousel sur mobile.
+          </p>
+          <div className="grid md:grid-cols-2 gap-6 pl-10">
+            {[1, 2, 3, 4].map((num) => (
+              <div key={`carousel_image_mobile_${num}`}>
+                <ImageUploadField
+                  label={`Image ${num} du carrousel Mobile`}
+                  value={carouselImagesMobile[`carousel_image_mobile_${num}`] || ''}
+                  onChange={(url) => handleCarouselImageUpdateByDevice('mobile', num, url)}
                   placeholder="https://example.com/image.jpg"
                   showPreview={true}
                   previewClassName="aspect-video h-48"

@@ -12,30 +12,86 @@ const Hero: React.FC = () => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [showPlayButton, setShowPlayButton] = useState(true);
   const [heroType, setHeroType] = useState<'video' | 'carousel'>('video');
+  const [isMobile, setIsMobile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [specialButton, setSpecialButton] = useState<HeroButton>({
     text: 'Spéciale Fêtes',
     url: '/evenements'
   });
   const [videoUrl, setVideoUrl] = useState<string>('/hero-video.mp4');
+  const [carouselImages, setCarouselImages] = useState<string[]>([]);
+
+  // Fonction pour extraire l'ID YouTube depuis différents formats d'URL
+  const getYouTubeId = (url: string): string | null => {
+    if (!url) return null;
+
+    // Format: youtube.com/shorts/ID
+    const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
+    if (shortsMatch) return shortsMatch[1];
+
+    // Format: youtube.com/watch?v=ID
+    const watchMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+    if (watchMatch) return watchMatch[1];
+
+    // Format: youtu.be/ID
+    const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+    if (shortMatch) return shortMatch[1];
+
+    // Format: youtube.com/embed/ID
+    const embedMatch = url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/);
+    if (embedMatch) return embedMatch[1];
+
+    return null;
+  };
+
+  const isYouTubeUrl = (url: string): boolean => {
+    return getYouTubeId(url) !== null;
+  };
+
+  // Détecter si l'utilisateur est sur mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchHeroType();
     fetchButtonConfig();
     fetchVideoUrl();
-  }, []);
+    fetchCarouselImages();
+  }, [isMobile]);
 
   const fetchHeroType = async () => {
     try {
+      // Récupérer les paramètres selon l'appareil
+      const settingKey = isMobile ? 'home_hero_type_mobile' : 'home_hero_type_desktop';
+
       const { data, error } = await supabase
         .from('site_settings')
         .select('setting_value')
-        .eq('setting_key', 'home_hero_type')
+        .eq('setting_key', settingKey)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        // Si le paramètre spécifique n'existe pas, utiliser le paramètre général
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('site_settings')
+          .select('setting_value')
+          .eq('setting_key', 'home_hero_type')
+          .single();
 
-      if (data) {
+        if (fallbackError && fallbackError.code !== 'PGRST116') throw fallbackError;
+
+        if (fallbackData) {
+          setHeroType(fallbackData.setting_value as 'video' | 'carousel');
+        }
+      } else if (data) {
         setHeroType(data.setting_value as 'video' | 'carousel');
       }
     } catch (error) {
@@ -71,22 +127,78 @@ const Hero: React.FC = () => {
 
   const fetchVideoUrl = async () => {
     try {
+      // Récupérer l'URL vidéo spécifique à l'appareil
+      const settingKey = isMobile ? 'hero_video_url_mobile' : 'hero_video_url_desktop';
+
       const { data, error } = await supabase
         .from('site_settings')
         .select('setting_value')
-        .eq('setting_key', 'hero_video_url')
+        .eq('setting_key', settingKey)
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.warn('Error fetching video URL:', error);
-        return;
-      }
+        // Si pas de paramètre spécifique, essayer le paramètre général
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('site_settings')
+          .select('setting_value')
+          .eq('setting_key', 'hero_video_url')
+          .single();
 
-      if (data?.setting_value) {
+        if (fallbackError && fallbackError.code !== 'PGRST116') {
+          console.warn('Error fetching video URL:', fallbackError);
+          return;
+        }
+
+        if (fallbackData?.setting_value) {
+          setVideoUrl(fallbackData.setting_value);
+        }
+      } else if (data?.setting_value) {
         setVideoUrl(data.setting_value);
       }
     } catch (error) {
       console.warn('Error fetching video URL:', error);
+    }
+  };
+
+  const fetchCarouselImages = async () => {
+    try {
+      // Récupérer les images spécifiques à l'appareil
+      const device = isMobile ? 'mobile' : 'desktop';
+      const keys = [
+        `carousel_image_${device}_1`,
+        `carousel_image_${device}_2`,
+        `carousel_image_${device}_3`,
+        `carousel_image_${device}_4`
+      ];
+
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', keys)
+        .order('setting_key');
+
+      if (error && error.code !== 'PGRST116') {
+        // Fallback vers les images générales
+        const fallbackKeys = ['carousel_image_1', 'carousel_image_2', 'carousel_image_3', 'carousel_image_4'];
+        const { data: fallbackData } = await supabase
+          .from('site_settings')
+          .select('setting_key, setting_value')
+          .in('setting_key', fallbackKeys)
+          .order('setting_key');
+
+        if (fallbackData) {
+          const images = fallbackData.map(item => item.setting_value).filter(Boolean);
+          setCarouselImages(images);
+        }
+        return;
+      }
+
+      if (data) {
+        const images = data.map(item => item.setting_value).filter(Boolean);
+        setCarouselImages(images);
+      }
+    } catch (error) {
+      console.warn('Error fetching carousel images:', error);
     }
   };
 
@@ -118,7 +230,7 @@ const Hero: React.FC = () => {
 
   // Si en mode carrousel, afficher le HeroCarouselWithButtons directement
   if (heroType === 'carousel') {
-    return <HeroCarouselWithButtons />;
+    return <HeroCarouselWithButtons carouselImages={carouselImages} />;
   }
 
   // Sinon afficher la vidéo hero
@@ -292,24 +404,41 @@ const Hero: React.FC = () => {
         }
       `}} />
 
-      {/* Vidéo d'arrière-plan */}
-      <video
-        ref={videoRef}
-        className="absolute top-0 left-0 w-full h-full"
-        style={{
-          objectFit: 'fill',
-          zIndex: 0
-        }}
-        loop
-        playsInline
-        preload="auto"
-        key={videoUrl}
-      >
-        <source src={videoUrl} type="video/mp4" />
-      </video>
+      {/* Vidéo d'arrière-plan - YouTube ou HTML5 */}
+      {isYouTubeUrl(videoUrl) ? (
+        <iframe
+          className="absolute top-0 left-0 w-full h-full"
+          style={{
+            objectFit: 'cover',
+            zIndex: 0,
+            border: 'none'
+          }}
+          src={`https://www.youtube.com/embed/${getYouTubeId(videoUrl)}?autoplay=1&mute=1&loop=1&playlist=${getYouTubeId(videoUrl)}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`}
+          title="YouTube video background"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          className="absolute top-0 left-0 w-full h-full"
+          style={{
+            objectFit: 'fill',
+            zIndex: 0
+          }}
+          loop
+          playsInline
+          preload="auto"
+          key={videoUrl}
+        >
+          <source src={videoUrl} type="video/mp4" />
+        </video>
+      )}
 
-      {/* Bouton play si autoplay échoue */}
-      {showPlayButton && (
+      {/* Bouton play si autoplay échoue - seulement pour vidéos non-YouTube */}
+      {showPlayButton && !isYouTubeUrl(videoUrl) && (
         <div className="play-btn" onClick={handlePlayClick}>
           ▶ Cliquez pour lire la vidéo avec son
         </div>
