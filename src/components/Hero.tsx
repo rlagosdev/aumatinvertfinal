@@ -238,7 +238,7 @@ const Hero: React.FC = () => {
     <section
       className="relative w-full h-screen overflow-hidden bg-black"
       style={{
-        paddingTop: isMobile ? '220px' : '0'
+        paddingTop: isMobile ? '150px' : '0'
       }}
     >
       {/* Styles intégrés */}
