@@ -77,7 +77,7 @@ import React, { useLayoutEffect, useState } from 'react';
                       <Route path="/legal-notice" element={<LegalNotice />} />
                       <Route path="/reset-notifications" element={<ResetNotifications />} />
                       <Route path="/gmb-ee283d4936ce203b5264331f749330b0" element={<GmbOptimization />} />
-                      <Route path="/pricing-93b95bf17c59730a77adb96aa4ad58de" element={<PricingGuide />} />
+                      <Route path="/pricing/:productId" element={<PricingGuide />} />
                       <Route path="/annonces" element={<Annonces />} />
                       <Route path="/admin/login" element={<AdminLogin />} />
                       <Route path="/api/auth/facebook/callback" element={<FacebookCallback />} />

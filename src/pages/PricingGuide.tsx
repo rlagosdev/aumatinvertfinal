@@ -1,7 +1,73 @@
-import React from 'react';
-import { Calculator, Package, Users, Percent, Scale, Pizza, ShoppingCart, BookOpen } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Calculator, Package, Users, Percent, Scale, Pizza, ShoppingCart, BookOpen, Loader } from 'lucide-react';
+import { supabase } from '../supabase/client';
+
+interface Product {
+  id: string;
+  nom: string;
+  prix: number;
+  categorie: string;
+  description?: string;
+  use_price_tiers?: boolean;
+  vendu_au_poids?: boolean;
+  prix_par_personne?: boolean;
+  prix_par_gamme?: boolean;
+  prix_par_section?: boolean;
+  prix_par_100g?: number;
+  prix_unitaire_personne?: number;
+}
 
 const PricingGuide: React.FC = () => {
+  const { productId } = useParams<{ productId: string }>();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!productId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', productId)
+          .single();
+
+        if (error) throw error;
+        setProduct(data);
+      } catch (error) {
+        console.error('Erreur lors du chargement du produit:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [productId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="h-12 w-12 text-site-primary animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Chargement du produit...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-gray-800 mb-4">Produit non trouvé</p>
+          <a href="/admin" className="text-site-primary hover:underline">Retour à l'administration</a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -10,18 +76,85 @@ const PricingGuide: React.FC = () => {
           <div className="flex items-center mb-6 pb-6 border-b border-gray-200">
             <Calculator className="h-10 w-10 text-site-primary mr-4" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Guide des Tarifications Produits</h1>
-              <p className="text-gray-600 mt-1">Au Matin Vert - Documentation complète</p>
+              <h1 className="text-3xl font-bold text-gray-900">Guide de Tarification</h1>
+              <p className="text-xl text-site-primary mt-1 font-semibold">{product.nom}</p>
+              <p className="text-gray-600 mt-1">Catégorie: {product.categorie} • Prix de base: {product.prix.toFixed(2)}€</p>
+              {product.description && (
+                <p className="text-sm text-gray-500 mt-2 italic">{product.description}</p>
+              )}
             </div>
           </div>
+
+          {/* Modes de tarification actifs */}
+          <section className="mb-8">
+            <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+              <h2 className="text-xl font-bold text-gray-900 mb-3">✅ Modes de tarification actifs pour ce produit</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {!product.use_price_tiers && !product.vendu_au_poids && !product.prix_par_personne && !product.prix_par_gamme && !product.prix_par_section && (
+                  <div className="bg-white border border-green-300 p-3 rounded-lg">
+                    <div className="flex items-center">
+                      <Package className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="font-semibold text-green-800">Prix Simple uniquement</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{product.prix.toFixed(2)}€ par unité</p>
+                  </div>
+                )}
+                {product.use_price_tiers && (
+                  <div className="bg-white border border-green-300 p-3 rounded-lg">
+                    <div className="flex items-center">
+                      <ShoppingCart className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="font-semibold text-green-800">Paliers de prix</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Prix dégressifs selon la quantité</p>
+                  </div>
+                )}
+                {product.vendu_au_poids && (
+                  <div className="bg-white border border-green-300 p-3 rounded-lg">
+                    <div className="flex items-center">
+                      <Scale className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="font-semibold text-green-800">Prix au poids</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{product.prix_par_100g?.toFixed(2)}€ / 100g</p>
+                  </div>
+                )}
+                {product.prix_par_personne && (
+                  <div className="bg-white border border-green-300 p-3 rounded-lg">
+                    <div className="flex items-center">
+                      <Users className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="font-semibold text-green-800">Prix par personne</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{product.prix_unitaire_personne?.toFixed(2)}€ / personne</p>
+                  </div>
+                )}
+                {product.prix_par_gamme && (
+                  <div className="bg-white border border-green-300 p-3 rounded-lg">
+                    <div className="flex items-center">
+                      <Pizza className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="font-semibold text-green-800">Prix par gamme</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Prix selon gamme + nb personnes</p>
+                  </div>
+                )}
+                {product.prix_par_section && (
+                  <div className="bg-white border border-green-300 p-3 rounded-lg">
+                    <div className="flex items-center">
+                      <Pizza className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="font-semibold text-green-800">Prix par section</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">1/4, 1/2, entier, etc.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
 
           {/* Introduction */}
           <section className="mb-8">
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">📚 Introduction</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">📚 À propos de ce guide</h2>
               <p className="text-gray-700">
-                Ce guide explique les 5 modes de tarification disponibles dans le système Au Matin Vert.
-                Chaque mode répond à un besoin spécifique et peut être combiné avec des codes promo.
+                Ce guide explique tous les modes de tarification disponibles dans le système.
+                Les modes actifs pour ce produit sont indiqués ci-dessus. Chaque mode répond à un besoin spécifique et peut être combiné avec des codes promo.
               </p>
             </div>
           </section>
