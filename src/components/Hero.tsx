@@ -426,6 +426,7 @@ const Hero: React.FC = () => {
           className="absolute top-0 left-0 w-full h-full"
           style={{
             objectFit: 'cover',
+            objectPosition: isMobile ? 'center top' : 'center center',
             zIndex: 0
           }}
           loop
