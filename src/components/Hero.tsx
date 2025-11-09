@@ -12,7 +12,13 @@ const Hero: React.FC = () => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [showPlayButton, setShowPlayButton] = useState(true);
   const [heroType, setHeroType] = useState<'video' | 'carousel'>('video');
-  const [isMobile, setIsMobile] = useState(false);
+  // Détection immédiate de l'appareil au chargement
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
   const [loading, setLoading] = useState(true);
   const [specialButton, setSpecialButton] = useState<HeroButton>({
     text: 'Spéciale Fêtes',
@@ -60,11 +66,17 @@ const Hero: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Charger la configuration au montage et quand isMobile change
   useEffect(() => {
-    fetchHeroType();
-    fetchButtonConfig();
-    fetchVideoUrl();
-    fetchCarouselImages();
+    const loadConfig = async () => {
+      await Promise.all([
+        fetchHeroType(),
+        fetchButtonConfig(),
+        fetchVideoUrl(),
+        fetchCarouselImages()
+      ]);
+    };
+    loadConfig();
   }, [isMobile]);
 
   const fetchHeroType = async () => {
@@ -437,7 +449,7 @@ const Hero: React.FC = () => {
           loop
           playsInline
           preload="auto"
-          key={videoUrl}
+          key={`${videoUrl}-${isMobile ? 'mobile' : 'desktop'}`}
         >
           <source src={videoUrl} type="video/mp4" />
         </video>
