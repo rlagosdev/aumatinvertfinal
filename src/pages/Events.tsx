@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Phone, Mail, Calendar, Users, Utensils, Sparkles, Heart, Award, Clock, CheckCircle, ChevronRight } from 'lucide-react';
 import { supabase } from '../supabase/client';
 import Header from '../components/Header';
@@ -30,15 +30,29 @@ interface Category {
 
 const Events: React.FC = () => {
   const { cartItems } = useCart();
+  const [searchParams] = useSearchParams();
   const [sections, setSections] = useState<EventSection[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   useEffect(() => {
+    // Lire la catégorie depuis l'URL
+    const categoryFromUrl = searchParams.get('categorie');
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl);
+      // Scroll vers la section des catégories si une catégorie est spécifiée
+      setTimeout(() => {
+        const categoriesSection = document.getElementById('categories-section');
+        if (categoriesSection) {
+          categoriesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+    }
     fetchSections();
     fetchCategories();
-  }, []);
+  }, [searchParams]);
 
   const fetchSections = async () => {
     try {
@@ -302,16 +316,20 @@ const Events: React.FC = () => {
               </div>
 
               {/* Additional Product Categories */}
-              <div className="mt-8 pt-8 border-t border-gray-300">
+              <div id="categories-section" className="mt-8 pt-8 border-t border-gray-300">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
                   Autres plateaux & produits événementiels
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                  {categories.map((category) => (
+                  {categories.map((category) => {
+                    const isSelected = selectedCategory === category.nom;
+                    return (
                     <Link
                       key={category.id}
                       to={`/produits/${encodeURIComponent(category.nom)}`}
-                      className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
+                      className={`group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden ${
+                        isSelected ? 'ring-4 ring-site-primary ring-opacity-50' : ''
+                      }`}
                     >
                       {/* Category Image */}
                       {category.image_url ? (
@@ -350,7 +368,8 @@ const Events: React.FC = () => {
                         </div>
                       </div>
                     </Link>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
 
