@@ -145,6 +145,13 @@ const AdminCategories: React.FC = () => {
 
     try {
       const newPosition = carouselImages.length;
+
+      console.log('Adding carousel image:', {
+        category_id: editingCategory.id,
+        image_url: newCarouselImage,
+        position: newPosition
+      });
+
       const { data, error } = await supabase
         .from('category_carousel_images')
         .insert({
@@ -155,14 +162,18 @@ const AdminCategories: React.FC = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
 
       setCarouselImages([...carouselImages, data]);
       setNewCarouselImage('');
       toast.success('Image ajoutée au carrousel');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding carousel image:', error);
-      toast.error('Erreur lors de l\'ajout de l\'image');
+      const errorMessage = error?.message || error?.details || 'Erreur inconnue';
+      toast.error(`Erreur: ${errorMessage}`);
     }
   };
 
@@ -175,11 +186,26 @@ const AdminCategories: React.FC = () => {
 
       if (error) throw error;
 
-      setCarouselImages(carouselImages.filter(img => img.id !== imageId));
+      // Mettre à jour les positions après suppression
+      const updatedImages = carouselImages.filter(img => img.id !== imageId);
+
+      // Réindexer les positions
+      for (let i = 0; i < updatedImages.length; i++) {
+        if (updatedImages[i].position !== i) {
+          await supabase
+            .from('category_carousel_images')
+            .update({ position: i })
+            .eq('id', updatedImages[i].id!);
+          updatedImages[i].position = i;
+        }
+      }
+
+      setCarouselImages(updatedImages);
       toast.success('Image supprimée du carrousel');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing carousel image:', error);
-      toast.error('Erreur lors de la suppression de l\'image');
+      const errorMessage = error?.message || error?.details || 'Erreur inconnue';
+      toast.error(`Erreur: ${errorMessage}`);
     }
   };
 
