@@ -88,7 +88,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product: initialProduct, onCl
   const modalContentRef = React.useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     nom: '',
-    prix: 0,
+    prix: '' as any,
     categorie: '',
     retrait_planifie: false,
     image_url: '',
@@ -97,14 +97,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product: initialProduct, onCl
     delai_retrait_unite: 'jours',
     description: '',
     promotion_active: false,
-    prix_promotionnel: 0,
+    prix_promotionnel: '' as any,
     promotion_date_debut: '',
     promotion_date_fin: '',
     use_price_tiers: false,
     quantite_min: 1,
     quantite_max: null,
     vendu_au_poids: false,
-    prix_par_100g: 0,
+    prix_par_100g: '' as any,
     prix_base: null,
     poids_base_grammes: 100,
     unite_poids: 'g',
@@ -159,7 +159,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product: initialProduct, onCl
             .from('products')
             .insert([{
               nom: '[Brouillon]',
-              prix: 0,
+              prix: 0.01,
               categorie: 'Brouillon',
               actif: false, // Invisible sur le site
               retrait_planifie: false
