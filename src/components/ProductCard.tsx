@@ -329,7 +329,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </h3>
 
         {/* Badge d'information tarifs dégressifs */}
-        {(discounts.length > 0 || personPriceTiers.length > 0 || rangeDiscountTiers.length > 0) && (
+        {(discountTiers.length > 0 || personPriceTiers.length > 0 || rangeDiscountTiers.length > 0) && (
           <div className="mb-2">
             <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
               <TrendingDown className="h-3 w-3 mr-1" />
