@@ -172,29 +172,46 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
     setSaving(true);
 
     try {
+      console.log('💾 Sauvegarde des tarifs dégressifs...', { productId, tiersCount: tiers.length });
+
       // D'abord, supprimer tous les paliers existants pour ce produit
       const { error: deleteError } = await supabase
         .from('person_price_tiers')
         .delete()
         .eq('product_id', productId);
 
-      if (deleteError && deleteError.code !== '42P01') throw deleteError;
+      if (deleteError && deleteError.code !== '42P01') {
+        console.error('❌ Erreur lors de la suppression:', deleteError);
+        throw deleteError;
+      }
+
+      console.log('✅ Anciens paliers supprimés');
 
       // Ensuite, insérer les nouveaux paliers
       if (tiers.length > 0) {
-        const { error: insertError } = await supabase
-          .from('person_price_tiers')
-          .insert(tiers.map((tier, index) => ({
-            product_id: tier.product_id,
-            min_persons: tier.min_persons,
-            max_persons: tier.max_persons,
-            price_per_person: tier.price_per_person,
-            tier_order: index + 1,
-            discount_type: tier.discount_type || 'fixed',
-            discount_percentage: tier.discount_percentage
-          })));
+        const tiersToInsert = tiers.map((tier, index) => ({
+          product_id: tier.product_id,
+          min_persons: tier.min_persons,
+          max_persons: tier.max_persons,
+          price_per_person: tier.price_per_person,
+          tier_order: index + 1,
+          discount_type: tier.discount_type || 'fixed',
+          discount_percentage: tier.discount_percentage
+        }));
 
-        if (insertError) throw insertError;
+        console.log('📝 Données à insérer:', tiersToInsert);
+
+        const { data: insertedData, error: insertError } = await supabase
+          .from('person_price_tiers')
+          .insert(tiersToInsert)
+          .select();
+
+        if (insertError) {
+          console.error('❌ Erreur lors de l\'insertion:', insertError);
+          throw insertError;
+        }
+
+        console.log('✅ Paliers insérés:', insertedData);
       }
 
       setMessage({
@@ -205,7 +222,7 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
       // Recharger les paliers pour obtenir les IDs
       await fetchTiers();
     } catch (error: any) {
-      console.error('Error saving person price tiers:', error);
+      console.error('❌ Error saving person price tiers:', error);
       if (error.code === '42P01') {
         setMessage({
           type: 'error',
@@ -214,12 +231,12 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
       } else {
         setMessage({
           type: 'error',
-          text: 'Erreur lors de la sauvegarde'
+          text: `Erreur lors de la sauvegarde: ${error.message || 'Erreur inconnue'}`
         });
       }
     } finally {
       setSaving(false);
-      setTimeout(() => setMessage(null), 3000);
+      setTimeout(() => setMessage(null), 5000);
     }
   };
 
