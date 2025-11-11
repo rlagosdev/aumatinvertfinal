@@ -437,7 +437,10 @@ const AdminCategories: React.FC = () => {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto p-4 pt-8">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl my-8">
+          <div
+            className="bg-white rounded-lg p-6 w-full max-w-2xl my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-zinc-800">
                 {editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}

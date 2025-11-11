@@ -244,6 +244,7 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium text-gray-900">Palier {index + 1}</h4>
               <button
+                type="button"
                 onClick={() => removeTier(index)}
                 className="text-red-600 hover:text-red-800 transition-colors"
                 title="Supprimer ce palier"
@@ -314,6 +315,7 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
         {/* Boutons d'action */}
         <div className="flex items-center justify-between pt-4">
           <button
+            type="button"
             onClick={addTier}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2"
           >
@@ -322,6 +324,7 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={handleSave}
             disabled={saving || tiers.length === 0}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
