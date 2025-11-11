@@ -120,15 +120,18 @@ const AdminProducts: React.FC = () => {
   }, [products, searchTerm, selectedCategory, sortBy, sortOrder]);
 
   const handleEdit = (product: Product) => {
+    // Scroll vers le haut AVANT d'ouvrir le modal
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     setEditingProduct(product);
     setShowForm(true);
-    // Scroll vers le haut à l'ouverture du formulaire
+
+    // Scroll le modal aussi après son ouverture
     setTimeout(() => {
       const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
       if (modalContainer) {
         modalContainer.scrollTop = 0;
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
   };
 
@@ -228,13 +231,15 @@ const AdminProducts: React.FC = () => {
           </button>
           <button
             onClick={() => {
+              // Scroll vers le haut AVANT d'ouvrir le modal
+              window.scrollTo({ top: 0, behavior: 'smooth' });
               setShowForm(true);
+              // Scroll le modal aussi après son ouverture
               setTimeout(() => {
                 const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
                 if (modalContainer) {
                   modalContainer.scrollTop = 0;
                 }
-                window.scrollTo({ top: 0, behavior: 'smooth' });
               }, 100);
             }}
             className="flex items-center space-x-2 bg-site-primary text-white px-4 py-2 rounded-lg hover:bg-site-primary transition-colors"

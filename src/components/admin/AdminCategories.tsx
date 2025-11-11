@@ -127,6 +127,9 @@ const AdminCategories: React.FC = () => {
   };
 
   const handleEdit = async (category: Category) => {
+    // Scroll vers le haut AVANT d'ouvrir le modal
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     setEditingCategory(category);
     setFormData({
       nom: category.nom,
@@ -138,13 +141,13 @@ const AdminCategories: React.FC = () => {
     });
     await fetchCarouselImages(category.id);
     setShowForm(true);
-    // Scroll vers le haut à l'ouverture du formulaire
+
+    // Scroll le modal aussi après son ouverture
     setTimeout(() => {
       const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
       if (modalContainer) {
         modalContainer.scrollTop = 0;
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
   };
 
@@ -342,13 +345,15 @@ const AdminCategories: React.FC = () => {
           />
           <button
             onClick={() => {
+              // Scroll vers le haut AVANT d'ouvrir le modal
+              window.scrollTo({ top: 0, behavior: 'smooth' });
               setShowForm(true);
+              // Scroll le modal aussi après son ouverture
               setTimeout(() => {
                 const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
                 if (modalContainer) {
                   modalContainer.scrollTop = 0;
                 }
-                window.scrollTo({ top: 0, behavior: 'smooth' });
               }, 100);
             }}
             className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
