@@ -418,7 +418,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   <span className="text-2xl font-bold text-site-primary">
                     {personPriceInfo.totalPrice.toFixed(2)} €
                   </span>
-                  {personPriceInfo.hasTierDiscount && (
+                  {personPriceInfo.hasTierDiscount && personPriceInfo.totalPrice < (product.prix_unitaire_personne! * selectedPersonCount) && (
                     <span className="ml-2 text-sm line-through text-gray-400">
                       {(product.prix_unitaire_personne! * selectedPersonCount).toFixed(2)} €
                     </span>
@@ -431,7 +431,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               </div>
               <div className="text-xs text-site-text-dark">
                 {personPriceInfo.pricePerPerson.toFixed(2)} € par personne
-                {personPriceInfo.hasTierDiscount && (
+                {personPriceInfo.hasTierDiscount && personPriceInfo.totalPrice < (product.prix_unitaire_personne! * selectedPersonCount) && (
                   <span className="ml-2 text-green-600 font-medium">
                     (Tarif dégressif appliqué !)
                   </span>
@@ -881,8 +881,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     {selectedRange!.prix_par_personne.toFixed(2)} € × {selectedPersonCount} {selectedPersonCount > 1 ? 'personnes' : 'personne'}
                   </p>
                 </>
-              ) : product.prix_par_personne && personPriceInfo && personPriceInfo.hasTierDiscount ? (
-                /* Avec tarif dégressif par personne */
+              ) : product.prix_par_personne && personPriceInfo && personPriceInfo.hasTierDiscount && personPriceInfo.totalPrice < (product.prix_unitaire_personne! * selectedPersonCount) ? (
+                /* Avec tarif dégressif par personne (seulement si prix réduit) */
                 <>
                   <p className="text-xs text-gray-500 line-through">
                     {(product.prix_unitaire_personne! * selectedPersonCount).toFixed(2)} €
