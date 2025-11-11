@@ -52,7 +52,13 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
           throw error;
         }
       } else {
-        setTiers(data || []);
+        // S'assurer que tous les paliers ont un discount_type défini
+        const tiersWithDefaults = (data || []).map(tier => ({
+          ...tier,
+          discount_type: tier.discount_type || 'fixed',
+          discount_percentage: tier.discount_percentage || null
+        }));
+        setTiers(tiersWithDefaults);
       }
     } catch (error) {
       console.error('Error fetching person price tiers:', error);
@@ -314,13 +320,14 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
                   <select
                     value={tier.discount_type || 'fixed'}
                     onChange={(e) => {
-                      updateTier(index, 'discount_type', e.target.value as 'fixed' | 'percentage');
-                      // Réinitialiser les valeurs selon le type
-                      if (e.target.value === 'percentage') {
-                        updateTier(index, 'discount_percentage', 10);
-                      } else {
-                        updateTier(index, 'discount_percentage', null);
-                      }
+                      const newType = e.target.value as 'fixed' | 'percentage';
+                      const updated = [...tiers];
+                      updated[index] = {
+                        ...updated[index],
+                        discount_type: newType,
+                        discount_percentage: newType === 'percentage' ? 10 : null
+                      };
+                      setTiers(updated);
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
