@@ -138,6 +138,10 @@ const AdminCategories: React.FC = () => {
     });
     await fetchCarouselImages(category.id);
     setShowForm(true);
+    // Scroll vers le haut à l'ouverture du formulaire
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleAddCarouselImage = async () => {
@@ -333,7 +337,12 @@ const AdminCategories: React.FC = () => {
             disabled={loading}
           />
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setShowForm(true);
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 100);
+            }}
             className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
           >
             <Plus className="h-4 w-4" />

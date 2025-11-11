@@ -122,6 +122,10 @@ const AdminProducts: React.FC = () => {
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setShowForm(true);
+    // Scroll vers le haut à l'ouverture du formulaire
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleDelete = async (productId: string) => {
@@ -219,7 +223,12 @@ const AdminProducts: React.FC = () => {
             <span>Aide Images</span>
           </button>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setShowForm(true);
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 100);
+            }}
             className="flex items-center space-x-2 bg-site-primary text-white px-4 py-2 rounded-lg hover:bg-site-primary transition-colors"
           >
             <Plus className="h-4 w-4" />
