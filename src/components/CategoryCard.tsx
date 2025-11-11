@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { supabase } from '../supabase/client';
 
 interface CategoryCardProps {
   category: {
@@ -11,39 +12,50 @@ interface CategoryCardProps {
   };
 }
 
-// Mapping of categories with multiple images
-const categoryImages: Record<string, string[]> = {
-  'Produits laitiers': [
-    '/categories/produits-laitiers.jpeg',
-    '/categories/produits-laitiers-2.jpeg',
-    '/categories/produits-laitiers-3.jpeg',
-    '/categories/produits-laitiers-4.jpeg'
-  ],
-  'Fruits': [
-    '/categories/fruits.jpeg',
-    '/categories/fruits-2.jpeg',
-    '/categories/fruits-3.jpeg'
-  ],
-  'Confitures': [
-    '/categories/confitures.jpeg',
-    '/categories/confitures-2.jpeg'
-  ],
-  'Biscuits apéritifs': [
-    '/categories/biscuits-aperitifs.jpeg',
-    '/categories/biscuits-aperitifs-2.jpeg'
-  ],
-  'Alternatives café': ['/categories/alternatives-cafe.jpeg'],
-  'Légumes': ['/categories/legumes.jpeg'],
-  'Conserves de légumes': ['/categories/conserves-legumes.jpeg'],
-  'Biscuits': ['/categories/biscuits.jpeg'],
-  'Chocolats': ['/categories/chocolats.jpeg'],
-  'Conserves de poisson': ['/categories/conserves-poisson.jpeg'],
-  'Jus & boissons': ['/categories/jus-boissons.jpeg']
-};
+interface CarouselImage {
+  id: string;
+  image_url: string;
+  position: number;
+}
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
-  const images = categoryImages[category.nom] || (category.image_url ? [category.image_url] : []);
+  const [carouselImages, setCarouselImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCarouselImages();
+  }, [category.id]);
+
+  const fetchCarouselImages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('category_carousel_images')
+        .select('image_url')
+        .eq('category_id', category.id)
+        .order('position');
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Use images from database
+        setCarouselImages(data.map(img => img.image_url));
+      } else {
+        // Fallback to category main image if no carousel images
+        const fallbackImages = category.image_url ? [category.image_url] : [];
+        setCarouselImages(fallbackImages);
+      }
+    } catch (error) {
+      console.error('Error fetching carousel images:', error);
+      // Fallback to category main image
+      const fallbackImages = category.image_url ? [category.image_url] : [];
+      setCarouselImages(fallbackImages);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const images = carouselImages;
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.preventDefault();

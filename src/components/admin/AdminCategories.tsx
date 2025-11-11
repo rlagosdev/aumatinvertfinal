@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabase/client';
 import { toast } from 'react-toastify';
-import { Plus, Edit, Trash2, Tag } from 'lucide-react';
+import { Plus, Edit, Trash2, Tag, ChevronUp, ChevronDown, X } from 'lucide-react';
 import ExportButton from './ExportButton';
 import ImportButton from './ImportButton';
 import ImageUploadField from './ImageUploadField';
@@ -19,6 +19,13 @@ interface Category {
   updated_at: string | null;
 }
 
+interface CarouselImage {
+  id?: string;
+  category_id: string;
+  image_url: string;
+  position: number;
+}
+
 const AdminCategories: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +39,8 @@ const AdminCategories: React.FC = () => {
     actif: true,
     position: 0,
   });
+  const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
+  const [newCarouselImage, setNewCarouselImage] = useState('');
 
   useEffect(() => {
     fetchCategories();
@@ -102,7 +111,22 @@ const AdminCategories: React.FC = () => {
     }
   };
 
-  const handleEdit = (category: Category) => {
+  const fetchCarouselImages = async (categoryId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('category_carousel_images')
+        .select('*')
+        .eq('category_id', categoryId)
+        .order('position');
+
+      if (error) throw error;
+      setCarouselImages(data || []);
+    } catch (error) {
+      console.error('Error fetching carousel images:', error);
+    }
+  };
+
+  const handleEdit = async (category: Category) => {
     setEditingCategory(category);
     setFormData({
       nom: category.nom,
@@ -112,7 +136,83 @@ const AdminCategories: React.FC = () => {
       actif: category.actif ?? true,
       position: category.position ?? 0,
     });
+    await fetchCarouselImages(category.id);
     setShowForm(true);
+  };
+
+  const handleAddCarouselImage = async () => {
+    if (!newCarouselImage || !editingCategory) return;
+
+    try {
+      const newPosition = carouselImages.length;
+      const { data, error } = await supabase
+        .from('category_carousel_images')
+        .insert({
+          category_id: editingCategory.id,
+          image_url: newCarouselImage,
+          position: newPosition,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCarouselImages([...carouselImages, data]);
+      setNewCarouselImage('');
+      toast.success('Image ajoutée au carrousel');
+    } catch (error) {
+      console.error('Error adding carousel image:', error);
+      toast.error('Erreur lors de l\'ajout de l\'image');
+    }
+  };
+
+  const handleRemoveCarouselImage = async (imageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('category_carousel_images')
+        .delete()
+        .eq('id', imageId);
+
+      if (error) throw error;
+
+      setCarouselImages(carouselImages.filter(img => img.id !== imageId));
+      toast.success('Image supprimée du carrousel');
+    } catch (error) {
+      console.error('Error removing carousel image:', error);
+      toast.error('Erreur lors de la suppression de l\'image');
+    }
+  };
+
+  const handleMoveCarouselImage = async (imageId: string, direction: 'up' | 'down') => {
+    const currentIndex = carouselImages.findIndex(img => img.id === imageId);
+    if (
+      (direction === 'up' && currentIndex === 0) ||
+      (direction === 'down' && currentIndex === carouselImages.length - 1)
+    ) {
+      return;
+    }
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const newImages = [...carouselImages];
+    [newImages[currentIndex], newImages[newIndex]] = [newImages[newIndex], newImages[currentIndex]];
+
+    try {
+      // Update positions in database
+      await Promise.all(
+        newImages.map((img, index) =>
+          supabase
+            .from('category_carousel_images')
+            .update({ position: index })
+            .eq('id', img.id!)
+        )
+      );
+
+      setCarouselImages(newImages);
+      toast.success('Position mise à jour');
+    } catch (error) {
+      console.error('Error updating carousel image position:', error);
+      toast.error('Erreur lors de la mise à jour de la position');
+    }
   };
 
   const handleDelete = async (categoryId: string) => {
@@ -157,6 +257,8 @@ const AdminCategories: React.FC = () => {
     setShowForm(false);
     setEditingCategory(null);
     setFormData({ nom: '', description: '', image_url: '', type_categorie: 'epicerie', actif: true, position: 0 });
+    setCarouselImages([]);
+    setNewCarouselImage('');
   };
 
   const handleImport = async (data: any[]): Promise<boolean> => {
@@ -377,6 +479,105 @@ const AdminCategories: React.FC = () => {
                   min="0"
                 />
               </div>
+
+              {/* Carousel Images Section - Only show when editing */}
+              {editingCategory && (
+                <div className="border-t border-zinc-200 pt-4">
+                  <label className="block text-sm font-medium text-zinc-700 mb-3">
+                    Images du carrousel ({carouselImages.length})
+                  </label>
+
+                  {/* Add new carousel image */}
+                  <div className="mb-4">
+                    <ImageUploadField
+                      label="Ajouter une image au carrousel"
+                      value={newCarouselImage}
+                      onChange={setNewCarouselImage}
+                      placeholder="https://example.com/image.jpg"
+                      showPreview={true}
+                      previewClassName="h-32"
+                      cropAspect={16 / 9}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCarouselImage}
+                      disabled={!newCarouselImage}
+                      className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Ajouter au carrousel
+                    </button>
+                  </div>
+
+                  {/* List of carousel images */}
+                  {carouselImages.length > 0 && (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {carouselImages.map((image, index) => (
+                        <div
+                          key={image.id}
+                          className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg border border-zinc-200"
+                        >
+                          {/* Image preview */}
+                          <img
+                            src={image.image_url}
+                            alt={`Carrousel ${index + 1}`}
+                            className="w-20 h-12 object-cover rounded"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="48"%3E%3Crect fill="%23ddd" width="80" height="48"/%3E%3C/svg%3E';
+                            }}
+                          />
+
+                          {/* Image URL (truncated) */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-zinc-700 truncate">
+                              {image.image_url}
+                            </p>
+                            <p className="text-xs text-zinc-500">
+                              Position: {index + 1}
+                            </p>
+                          </div>
+
+                          {/* Controls */}
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveCarouselImage(image.id!, 'up')}
+                              disabled={index === 0}
+                              className="p-1 text-zinc-600 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                              title="Monter"
+                            >
+                              <ChevronUp className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveCarouselImage(image.id!, 'down')}
+                              disabled={index === carouselImages.length - 1}
+                              className="p-1 text-zinc-600 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                              title="Descendre"
+                            >
+                              <ChevronDown className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCarouselImage(image.id!)}
+                              className="p-1 text-red-600 hover:text-red-800"
+                              title="Supprimer"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {carouselImages.length === 0 && (
+                    <p className="text-sm text-zinc-500 italic">
+                      Aucune image dans le carrousel. Ajoutez-en une ci-dessus.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-center">
                 <input
