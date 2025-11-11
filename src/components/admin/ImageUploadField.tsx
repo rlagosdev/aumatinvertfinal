@@ -83,36 +83,38 @@ const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
       <label className="block text-sm font-medium text-zinc-700">
         {label}
       </label>
-      <div className="flex space-x-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           type="url"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          className="flex-1 px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
         />
-        {value && (
+        <div className="flex gap-2">
+          {value && (
+            <button
+              type="button"
+              onClick={() => setShowCropper(true)}
+              disabled={uploading}
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors disabled:opacity-50 whitespace-nowrap text-sm"
+              title="Recadrer l'image"
+            >
+              <Crop className="h-4 w-4" />
+              <span>Recadrer</span>
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => setShowCropper(true)}
+            onClick={() => setShowImgBBUploader(true)}
             disabled={uploading}
-            className="flex items-center space-x-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors disabled:opacity-50"
-            title="Recadrer l'image"
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-site-primary text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 whitespace-nowrap text-sm"
+            title="Upload via ImgBB"
           >
-            <Crop className="h-4 w-4" />
-            <span className="hidden sm:inline">Recadrer</span>
+            <Upload className="h-4 w-4" />
+            <span>Upload</span>
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setShowImgBBUploader(true)}
-          disabled={uploading}
-          className="flex items-center space-x-2 px-4 py-2 bg-site-primary text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
-          title="Upload via ImgBB"
-        >
-          <Upload className="h-4 w-4" />
-          <span className="hidden sm:inline">Upload</span>
-        </button>
+        </div>
       </div>
 
       {showPreview && value && (

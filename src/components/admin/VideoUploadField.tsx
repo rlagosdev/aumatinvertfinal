@@ -126,41 +126,43 @@ const VideoUploadField: React.FC<VideoUploadFieldProps> = ({
         {label}
       </label>
 
-      <div className="flex space-x-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           type="url"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          className="flex-1 px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
         />
 
-        {value && (
-          <button
-            type="button"
-            onClick={handleClearUrl}
-            className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            title="Effacer l'URL"
-          >
-            <X className="h-4 w-4" />
-            <span className="hidden sm:inline">Effacer</span>
-          </button>
-        )}
+        <div className="flex gap-2">
+          {value && (
+            <button
+              type="button"
+              onClick={handleClearUrl}
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap text-sm"
+              title="Effacer l'URL"
+            >
+              <X className="h-4 w-4" />
+              <span>Effacer</span>
+            </button>
+          )}
 
-        <label className="flex items-center space-x-2 px-4 py-2 bg-site-primary text-white rounded-lg hover:bg-opacity-90 transition-colors cursor-pointer disabled:opacity-50">
-          <Upload className="h-4 w-4" />
-          <span className="hidden sm:inline">
-            {uploading ? 'Upload...' : 'Upload Vidéo'}
-          </span>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={accept}
-            onChange={handleFileSelect}
-            disabled={uploading}
-            className="hidden"
-          />
-        </label>
+          <label className="flex items-center justify-center space-x-2 px-4 py-2 bg-site-primary text-white rounded-lg hover:bg-opacity-90 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap text-sm">
+            <Upload className="h-4 w-4" />
+            <span>
+              {uploading ? 'Upload...' : 'Upload Vidéo'}
+            </span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={accept}
+              onChange={handleFileSelect}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
+        </div>
       </div>
 
       {uploading && (
