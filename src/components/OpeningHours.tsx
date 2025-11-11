@@ -106,16 +106,27 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ showStatus = false, classNa
       )}
       
       <div className="space-y-2">
-        {schedule.map((item, index) => (
-          <div key={index} className="flex justify-between items-center gap-4">
-            <span className={`font-medium flex-shrink-0 ${item.isClosed ? themeClasses.dayTextClosed : themeClasses.dayText}`}>
-              {item.day}
-            </span>
-            <span className={`text-sm text-right ${item.isClosed ? themeClasses.hoursTextClosed : themeClasses.hoursText}`}>
-              {item.hours}
-            </span>
-          </div>
-        ))}
+        {schedule.map((item, index) => {
+          // Séparer les horaires matin et après-midi si présents
+          const hoursArray = item.hours.includes(' / ')
+            ? item.hours.split(' / ')
+            : [item.hours];
+
+          return (
+            <div key={index} className="flex justify-between items-start gap-4">
+              <span className={`font-medium flex-shrink-0 ${item.isClosed ? themeClasses.dayTextClosed : themeClasses.dayText}`}>
+                {item.day}
+              </span>
+              <div className="flex flex-col items-end">
+                {hoursArray.map((hours, hIndex) => (
+                  <span key={hIndex} className={`text-sm text-right ${item.isClosed ? themeClasses.hoursTextClosed : themeClasses.hoursText}`}>
+                    {hours}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

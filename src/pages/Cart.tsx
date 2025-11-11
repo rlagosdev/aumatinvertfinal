@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+    import { Link } from 'react-router-dom';
     import Header from '../components/Header';
     import Footer from '../components/Footer';
     import OrderModal from '../components/OrderModal';
@@ -394,12 +395,12 @@ import React, { useMemo, useState } from 'react';
                 </div>
                 <h1 className="text-2xl font-bold text-zinc-800 mb-4">Votre panier est vide</h1>
                 <p className="text-zinc-600 mb-8">Ajoutez des produits à votre panier pour commencer vos achats.</p>
-                <a
-                  href="/produits"
+                <Link
+                  to="/produits"
                   className="bg-site-primary text-white px-8 py-4 rounded-lg font-semibold hover:bg-opacity-90 transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   Voir nos produits
-                </a>
+                </Link>
               </div>
             </main>
             <Footer />

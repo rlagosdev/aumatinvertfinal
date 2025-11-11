@@ -1,50 +1,35 @@
-// Script pour vérifier les catégories dans la base de données
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'your-supabase-url';
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'your-supabase-key';
+const SUPABASE_URL = 'https://bvvekjhvmorgdvleobdo.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2dmVramh2bW9yZ2R2bGVvYmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMDA1NDcsImV4cCI6MjA3NTY3NjU0N30.HoR5ektpKVy4nudbUvGBdWDyKsHqHy1u7Yw1CPVJ-eM';
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-async function checkCategories() {
-  console.log('=== Vérification des catégories de produits ===');
-  const { data: categories, error: catError } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name');
+async function checkCarouselImages() {
+  console.log('🔍 Recherche de toutes les images du carrousel...\n');
 
-  if (catError) {
-    console.error('Erreur catégories produits:', catError);
-  } else {
-    console.log('Catégories de produits trouvées:', categories?.length);
-    categories?.forEach(cat => {
-      console.log(`  - ${cat.name}`);
-    });
-  }
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('setting_key, setting_value')
+      .like('setting_key', '%carousel%')
+      .order('setting_key');
 
-  console.log('\n=== Vérification des catégories d\'événements ===');
-  const { data: eventSettings, error: eventError } = await supabase
-    .from('site_settings')
-    .select('*')
-    .eq('setting_key', 'event_categories')
-    .single();
-
-  if (eventError) {
-    console.error('Erreur catégories événements:', eventError);
-  } else {
-    console.log('Setting trouvé:', eventSettings);
-    if (eventSettings?.setting_value) {
-      try {
-        const eventCats = JSON.parse(eventSettings.setting_value);
-        console.log('Catégories d\'événements:', eventCats);
-        eventCats.forEach(cat => {
-          console.log(`  - ${cat}`);
-        });
-      } catch (e) {
-        console.error('Erreur parsing:', e);
-      }
+    if (error) {
+      console.error('❌ Erreur:', error);
+      return;
     }
+
+    console.log(`📋 Trouvé ${data.length} entrées de carrousel:\n`);
+    data.forEach(setting => {
+      const value = setting.setting_value || '(vide)';
+      console.log(`  • ${setting.setting_key}`);
+      console.log(`    URL: ${value}\n`);
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur inattendue:', error);
   }
 }
 
-checkCategories();
+checkCarouselImages();

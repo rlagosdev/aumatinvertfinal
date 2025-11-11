@@ -73,7 +73,7 @@ const Categories: React.FC = () => {
               </li>
               <li className="flex items-start">
                 <span className="text-site-buttons mr-3 text-xl">•</span>
-                <span className="text-lg">Fruits & légumes frais du MIN de Nantes</span>
+                <span className="text-lg">Fruits et légumes frais du MIN de Nantes</span>
               </li>
               <li className="flex items-start">
                 <span className="text-site-buttons mr-3 text-xl">•</span>
@@ -81,7 +81,7 @@ const Categories: React.FC = () => {
               </li>
               <li className="flex items-start">
                 <span className="text-site-buttons mr-3 text-xl">•</span>
-                <span className="text-lg">Conserves de légumes et de poisson, jus & boissons</span>
+                <span className="text-lg">Conserves de légumes et de poisson, jus et boissons</span>
               </li>
               <li className="flex items-start">
                 <span className="text-site-buttons mr-3 text-xl">•</span>

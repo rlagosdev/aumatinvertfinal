@@ -1,4 +1,5 @@
 import React from 'react';
+    import { Link } from 'react-router-dom';
     import HeroHeader from '../components/HeroHeader';
     import Footer from '../components/Footer';
     import Hero from '../components/Hero';
@@ -43,18 +44,18 @@ import React from 'react';
                   Explorez notre sélection de produits frais et locaux, ou composez votre plateau gourmand personnalisé.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <a
-                    href="/evenements"
+                  <Link
+                    to="/evenements"
                     className="bg-white text-site-text-dark px-8 py-4 rounded-lg font-semibold hover:bg-site-background transition-colors duration-200 shadow-lg"
                   >
                     Commander un plateau
-                  </a>
-                  <a
-                    href="/produits"
+                  </Link>
+                  <Link
+                    to="/produits"
                     className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-site-text-dark transition-all duration-200 shadow-lg"
                   >
                     Voir nos produits
-                  </a>
+                  </Link>
                 </div>
               </div>
             </section>

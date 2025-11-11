@@ -57,14 +57,10 @@ const Values: React.FC = () => {
                     <IconComponent className={`h-8 w-8 ${value.color}`} />
                   </div>
                 </div>
-                
-                <h3 className="text-xl font-semibold text-zinc-800 mb-3">
+
+                <h3 className="text-xl font-semibold text-zinc-800">
                   {value.title}
                 </h3>
-                
-                <p className="text-zinc-600 leading-relaxed">
-                  {value.description}
-                </p>
               </div>
             );
           })}

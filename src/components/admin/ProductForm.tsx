@@ -11,6 +11,7 @@ import TempWeightPricingManager from './TempWeightPricingManager';
 import ProductPriceTiersManager from './ProductPriceTiersManager';
 import WeightPricingManager from './WeightPricingManager';
 import PersonPricingManager from './PersonPricingManager';
+import PersonPriceTiersManager from './PersonPriceTiersManager';
 import RangePricingManager from './RangePricingManager';
 import SectionPricingManager from './SectionPricingManager';
 import PromoCodeManager from './PromoCodeManager';
@@ -1136,6 +1137,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product: initialProduct, onCl
                 La tarification par personne sera disponible après la création du produit.
               </p>
             </div>
+          )}
+
+          {/* Gestionnaire de tarifs dégressifs par personne */}
+          {product && formData.prix_par_personne && (
+            <PersonPriceTiersManager
+              productId={product.id}
+              prixParPersonne={formData.prix_par_personne || false}
+            />
           )}
 
           {/* Gestionnaire de tarification par gamme + personne */}

@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
     import { MapPin, Truck, Users, Building, Phone, Mail } from 'lucide-react';
     import { supabase } from '../supabase/client';
     import { useContactInfo } from '../hooks/useContactInfo';
+    import { useCart } from '../contexts/CartContext';
 
     const Services: React.FC = () => {
       const [serviceImage, setServiceImage] = useState<string>('');
@@ -17,6 +18,7 @@ import React, { useState, useEffect } from 'react';
       const [loadingImage, setLoadingImage] = useState(true);
       const [isContactModalOpen, setIsContactModalOpen] = useState(false);
       const { contactInfo, loading: contactLoading } = useContactInfo();
+      const { cartItems } = useCart();
 
       useEffect(() => {
         fetchServiceImages();
@@ -50,7 +52,7 @@ import React, { useState, useEffect } from 'react';
       };
       return (
         <div className="min-h-screen bg-gray-50">
-          <Header />
+          <Header cartItemsCount={cartItems.length} />
 
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Hero Image */}

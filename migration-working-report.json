@@ -1,0 +1,155 @@
+{
+  "date": "2025-11-09T09:14:26.434Z",
+  "total": 15,
+  "success": 12,
+  "failed": 3,
+  "results": [
+    {
+      "table": "categories",
+      "id": "e8bc1d75-0f4b-4020-83d2-eb769ad288c9",
+      "name": "Conserves de poisson",
+      "field": "image_url",
+      "url": "https://images.unsplash.com/photo-1591189863935-ab08886ac6e8?w=800",
+      "status": "failed",
+      "error": "HTTP 404"
+    },
+    {
+      "table": "products",
+      "id": "30298aca-d6dd-4676-b45d-21ed0dd837d0",
+      "name": "Chocolat Noir Nicaragua",
+      "field": "image_url",
+      "url": "https://i.imgur.com/eCM9ny6.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/produits/chocolat-noir-nicaragua.jpeg",
+      "storagePath": "produits/chocolat-noir-nicaragua.jpeg"
+    },
+    {
+      "table": "products",
+      "id": "cdcec447-9f71-4e2c-9718-f3f14aea4cb2",
+      "name": "Abricots Royal",
+      "field": "image_url",
+      "url": "https://i.imgur.com/rG6bSP7.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/produits/abricots-royal.jpeg",
+      "storagePath": "produits/abricots-royal.jpeg"
+    },
+    {
+      "table": "products",
+      "id": "f7ad8ba8-6ce0-4fde-af26-bbaa5b460213",
+      "name": "La Bigoudène",
+      "field": "image_url",
+      "url": "https://i.imgur.com/lloyXIg.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/produits/la-bigoudene.jpeg",
+      "storagePath": "produits/la-bigoudene.jpeg"
+    },
+    {
+      "table": "products",
+      "id": "d9b2db18-b37a-4453-9f53-0a2ec6e1c7ca",
+      "name": "Classique - Alternative Café SANS CAFÉINE",
+      "field": "image_url",
+      "url": "https://i.imgur.com/jqrplz5.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/produits/classique-alternative-cafe-sans-cafeine.jpeg",
+      "storagePath": "produits/classique-alternative-cafe-sans-cafeine.jpeg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "a6e0fd4c-8e9e-43d4-b853-4c7e9dc95e53",
+      "name": "section6 - Cocktails & Apéritifs",
+      "field": "image_url",
+      "url": "https://i.imgur.com/X6PdcWC.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/evenements/section6-cocktails-aperitifs.jpeg",
+      "storagePath": "evenements/section6-cocktails-aperitifs.jpeg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "4fced81d-f591-49c7-9aad-8eaf29d6c4c6",
+      "name": "hero - Nous créons des plateaux uniques",
+      "field": "image_url",
+      "url": "https://files.catbox.moe/r6kdr0.jpg",
+      "status": "failed",
+      "error": "socket hang up"
+    },
+    {
+      "table": "site_settings",
+      "id": "0224b892-3797-4694-9010-471a766a52c4",
+      "name": "about_image_2",
+      "field": "setting_value",
+      "url": "https://i.imgur.com/QZWJBoD.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/about/about-image-2.jpeg",
+      "storagePath": "about/about-image-2.jpeg"
+    },
+    {
+      "table": "site_settings",
+      "id": "edcba00f-acfb-4f55-99b6-390f96dd5c9a",
+      "name": "carousel_image_1",
+      "field": "setting_value",
+      "url": "https://i.imgur.com/fIk5Yr7.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/carousel/carousel-image-1.jpeg",
+      "storagePath": "carousel/carousel-image-1.jpeg"
+    },
+    {
+      "table": "site_settings",
+      "id": "0e23b9e8-9d46-4406-8e46-cc2f7175c841",
+      "name": "service_page_image",
+      "field": "setting_value",
+      "url": "https://i.imgur.com/TsrGxMr.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/services/service-page-image.jpeg",
+      "storagePath": "services/service-page-image.jpeg"
+    },
+    {
+      "table": "site_settings",
+      "id": "a4968001-2f2e-4065-8aa1-6e3b88fd12a1",
+      "name": "about_image_4",
+      "field": "setting_value",
+      "url": "https://i.imgur.com/EWT08WI.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/about/about-image-4.jpeg",
+      "storagePath": "about/about-image-4.jpeg"
+    },
+    {
+      "table": "site_settings",
+      "id": "28b2dab5-b544-4e86-8574-d07c8db64ffd",
+      "name": "about_image_3",
+      "field": "setting_value",
+      "url": "https://i.imgur.com/Ar8ZW58.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/about/about-image-3.jpeg",
+      "storagePath": "about/about-image-3.jpeg"
+    },
+    {
+      "table": "site_settings",
+      "id": "bd618e10-1e3c-4a63-becb-a86c841ab177",
+      "name": "carousel_image_2",
+      "field": "setting_value",
+      "url": "https://i.imgur.com/rDNCnZv.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/carousel/carousel-image-2.jpeg",
+      "storagePath": "carousel/carousel-image-2.jpeg"
+    },
+    {
+      "table": "site_settings",
+      "id": "6f56d035-61f7-4d64-91e7-67b5fdd7f8fd",
+      "name": "about_image_5",
+      "field": "setting_value",
+      "url": "https://i.imgur.com/KCZdy2a.jpeg",
+      "status": "success",
+      "newUrl": "https://bvvekjhvmorgdvleobdo.supabase.co/storage/v1/object/public/images-produits/about/about-image-5.jpeg",
+      "storagePath": "about/about-image-5.jpeg"
+    },
+    {
+      "table": "site_settings",
+      "id": "4c29c939-9197-494b-9497-1955fb0d9551",
+      "name": "annonce_image",
+      "field": "setting_value",
+      "url": "https://files.catbox.moe/i1qj18.png",
+      "status": "failed",
+      "error": "socket hang up"
+    }
+  ]
+}

@@ -85,7 +85,7 @@ const TermsOfService: React.FC = () => {
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4 mb-3">
                 <li><strong>Retrait sur place</strong> : Gratuit - Retirez votre commande à l'adresse indiquée</li>
-                <li><strong>Livraison à domicile</strong> : Dans un rayon de 2km autour de notre point de vente</li>
+                <li><strong>Livraison à domicile</strong> : Dans un rayon de 3km autour de notre point de vente</li>
               </ul>
               <p>
                 Les délais de préparation sont indiqués lors de la commande. Vous serez notifié

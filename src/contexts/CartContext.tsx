@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
     import type { ReactNode } from 'react';
 
     interface Product {
@@ -63,7 +63,25 @@ import React, { createContext, useContext, useState } from 'react';
     }
 
     export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-      const [cartItems, setCartItems] = useState<CartItem[]>([]);
+      // Initialiser le panier depuis localStorage
+      const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+        try {
+          const savedCart = localStorage.getItem('shopping-cart');
+          return savedCart ? JSON.parse(savedCart) : [];
+        } catch (error) {
+          console.error('Erreur lors du chargement du panier:', error);
+          return [];
+        }
+      });
+
+      // Sauvegarder le panier dans localStorage à chaque modification
+      useEffect(() => {
+        try {
+          localStorage.setItem('shopping-cart', JSON.stringify(cartItems));
+        } catch (error) {
+          console.error('Erreur lors de la sauvegarde du panier:', error);
+        }
+      }, [cartItems]);
 
       const addToCart = (
         product: Product,

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { supabase } from '../supabase/client';
 import { Heart, Store, Users, Award, Info } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
 
 interface AboutSection {
   id: string;
@@ -26,6 +28,7 @@ const ICON_MAP: { [key: string]: React.ComponentType<{ className?: string }> } =
 const About: React.FC = () => {
   const [sections, setSections] = useState<AboutSection[]>([]);
   const [loading, setLoading] = useState(true);
+  const { cartItems } = useCart();
 
   useEffect(() => {
     fetchAboutSections();
@@ -53,7 +56,7 @@ const About: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header cartItemsCount={cartItems.length} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Page Header */}
@@ -156,18 +159,18 @@ const About: React.FC = () => {
             Découvrez notre magasin et laissez-vous guider par nos conseils avisés.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/services"
+            <Link
+              to="/services"
               className="bg-white text-site-primary px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200"
             >
               Nos services
-            </a>
-            <a
-              href="/products"
+            </Link>
+            <Link
+              to="/produits"
               className="border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-site-primary transition-all duration-200"
             >
               Nos produits
-            </a>
+            </Link>
           </div>
         </div>
       </main>

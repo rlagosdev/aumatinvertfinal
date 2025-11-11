@@ -292,9 +292,6 @@ const Events: React.FC = () => {
               <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">
                 Nos préparations à la demande
               </h2>
-              <p className="text-lg text-site-text-dark mb-6 font-medium text-center">
-                Nous préparons à la demande :
-              </p>
               <ul className="space-y-4 text-site-text-dark mb-8 max-w-2xl mx-auto">
                 <li className="flex items-start">
                   <span className="text-site-buttons mr-3 text-xl flex-shrink-0">•</span>
@@ -302,7 +299,7 @@ const Events: React.FC = () => {
                 </li>
                 <li className="flex items-start">
                   <span className="text-site-buttons mr-3 text-xl flex-shrink-0">•</span>
-                  <span className="text-lg">Plateaux apéritifs : fromagers ou mixtes fruits & fromage</span>
+                  <span className="text-lg">Plateaux apéritifs : fromagers ou mixtes crudité & fromage</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-site-buttons mr-3 text-xl flex-shrink-0">•</span>

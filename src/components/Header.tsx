@@ -101,9 +101,9 @@ const Header: React.FC<HeaderProps> = ({ cartItemsCount = 0 }) => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`font-medium transition-colors duration-200 ${
+                className={`nav-link-aligned ${
                   isActive(item.href)
-                    ? 'text-site-primary border-b-2 border-site-primary pb-1'
+                    ? 'text-site-primary'
                     : 'text-zinc-700 hover:text-site-primary'
                 }`}
               >

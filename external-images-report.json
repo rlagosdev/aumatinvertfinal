@@ -1,0 +1,251 @@
+{
+  "total": 17,
+  "images": [
+    {
+      "table": "categories",
+      "id": "e8bc1d75-0f4b-4020-83d2-eb769ad288c9",
+      "name": "Conserves de poisson",
+      "field": "image_url",
+      "url": "https://images.unsplash.com/photo-1591189863935-ab08886ac6e8?w=800"
+    },
+    {
+      "table": "products",
+      "id": "d0b50cbe-1964-46bd-9b84-cc45a4a9441e",
+      "name": "Sablés caramel au beurre salé ",
+      "field": "image_url",
+      "url": "https://i.ibb.co/cSpgqd57/20251009-123320.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "17316c44-f4c3-4e0a-9eea-de428200abcd",
+      "name": "section2 - Anniversaires Mémorables",
+      "field": "image_url",
+      "url": "https://i.ibb.co/ksfQnrGJ/1000025325.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "6fc9b1ce-27d2-4c1f-b54e-6263e1b7350f",
+      "name": "section3 - Réceptions Professionnelles",
+      "field": "image_url",
+      "url": "https://i.ibb.co/hJG4w6FT/1000025355.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "1c8db94d-53ea-4236-b660-975ac61aac43",
+      "name": "section4 - Buffets Personnalisés",
+      "field": "image_url",
+      "url": "https://i.ibb.co/0jYwHFCX/cropped-image.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "1eb6a007-46c6-4dd3-82ec-5504226ef30e",
+      "name": "section5 - Service Traiteur Premium",
+      "field": "image_url",
+      "url": "https://i.ibb.co/ZzGNYYsy/1000025418.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "59923463-d813-4015-a2bc-7d895d1303b8",
+      "name": "section7 - Desserts Raffinés",
+      "field": "image_url",
+      "url": "https://i.ibb.co/KTCj1mV/1000025353.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "60141853-fe1e-4426-b5cb-2e508c005c09",
+      "name": "section8 - Buffet Personnalisé",
+      "field": "image_url",
+      "url": "https://i.ibb.co/27F9zxmH/cropped-image.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "97b4a4f5-3026-42db-955c-e256e717a3b0",
+      "name": "section9 - Service à Domicile",
+      "field": "image_url",
+      "url": "https://i.ibb.co/yBgXgHXQ/9u-E15e-C84-I0b-Rj-EM0ld-Ak-cfb4b1d64dba44458245dcee747c09d6.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "6a4571ae-8e66-446b-9962-af92ef2e0bff",
+      "name": "section10 - Contactez-Nous",
+      "field": "image_url",
+      "url": "https://i.ibb.co/Vc8h6zJD/1000047271.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "30e75d3a-e81e-4aa8-aefb-37c028011584",
+      "name": "section1 - Mariages de Rêve",
+      "field": "image_url",
+      "url": "https://i.ibb.co/r2NjtJVq/1000025287.jpg"
+    },
+    {
+      "table": "evenements_config",
+      "id": "4fced81d-f591-49c7-9aad-8eaf29d6c4c6",
+      "name": "hero - Nous créons des plateaux uniques",
+      "field": "image_url",
+      "url": "https://files.catbox.moe/r6kdr0.jpg"
+    },
+    {
+      "table": "site_settings",
+      "id": "08a6dbd2-f244-46d9-8a59-743939a150de",
+      "name": "carousel_image_4",
+      "field": "setting_value",
+      "url": "https://i.ibb.co/M5737bQP/e15f71f8-420b-4d21-85cf-f48308c60a50.jpg"
+    },
+    {
+      "table": "site_settings",
+      "id": "0cfbf959-6351-4125-8578-89b38d650f8b",
+      "name": "carousel_image_3",
+      "field": "setting_value",
+      "url": "https://i.ibb.co/3mZtjZJG/cropped-image.jpg"
+    },
+    {
+      "table": "site_settings",
+      "id": "4c29c939-9197-494b-9497-1955fb0d9551",
+      "name": "annonce_image",
+      "field": "setting_value",
+      "url": "https://files.catbox.moe/i1qj18.png"
+    },
+    {
+      "table": "site_settings",
+      "id": "ce57a0c1-28f3-4636-aa36-206abba7dbf0",
+      "name": "about_image_1",
+      "field": "setting_value",
+      "url": "https://i.ibb.co/rK8VcmcH/cropped-image.jpg"
+    },
+    {
+      "table": "site_settings",
+      "id": "c4037d12-6200-4831-ad1f-79e5ecb216c8",
+      "name": "logo_image",
+      "field": "setting_value",
+      "url": "https://i.ibb.co/GvMxGP1y/Ee-Wbq-FRH-5-Dy-JX3-KME-78e4942e75434f10b09c2c133e14d107.jpg"
+    }
+  ],
+  "byDomain": {
+    "images.unsplash.com": [
+      {
+        "table": "categories",
+        "id": "e8bc1d75-0f4b-4020-83d2-eb769ad288c9",
+        "name": "Conserves de poisson",
+        "field": "image_url",
+        "url": "https://images.unsplash.com/photo-1591189863935-ab08886ac6e8?w=800"
+      }
+    ],
+    "i.ibb.co": [
+      {
+        "table": "products",
+        "id": "d0b50cbe-1964-46bd-9b84-cc45a4a9441e",
+        "name": "Sablés caramel au beurre salé ",
+        "field": "image_url",
+        "url": "https://i.ibb.co/cSpgqd57/20251009-123320.jpg"
+      },
+      {
+        "table": "evenements_config",
+        "id": "17316c44-f4c3-4e0a-9eea-de428200abcd",
+        "name": "section2 - Anniversaires Mémorables",
+        "field": "image_url",
+        "url": "https://i.ibb.co/ksfQnrGJ/1000025325.jpg"
+      },
+      {
+        "table": "evenements_config",
+        "id": "6fc9b1ce-27d2-4c1f-b54e-6263e1b7350f",
+        "name": "section3 - Réceptions Professionnelles",
+        "field": "image_url",
+        "url": "https://i.ibb.co/hJG4w6FT/1000025355.jpg"
+      },
+      {
+        "table": "evenements_config",
+        "id": "1c8db94d-53ea-4236-b660-975ac61aac43",
+        "name": "section4 - Buffets Personnalisés",
+        "field": "image_url",
+        "url": "https://i.ibb.co/0jYwHFCX/cropped-image.jpg"
+      },
+      {
+        "table": "evenements_config",
+        "id": "1eb6a007-46c6-4dd3-82ec-5504226ef30e",
+        "name": "section5 - Service Traiteur Premium",
+        "field": "image_url",
+        "url": "https://i.ibb.co/ZzGNYYsy/1000025418.jpg"
+      },
+      {
+        "table": "evenements_config",
+        "id": "59923463-d813-4015-a2bc-7d895d1303b8",
+        "name": "section7 - Desserts Raffinés",
+        "field": "image_url",
+        "url": "https://i.ibb.co/KTCj1mV/1000025353.jpg"
+      },
+      {
+        "table": "evenements_config",
+        "id": "60141853-fe1e-4426-b5cb-2e508c005c09",
+        "name": "section8 - Buffet Personnalisé",
+        "field": "image_url",
+        "url": "https://i.ibb.co/27F9zxmH/cropped-image.jpg"
+      },
+      {
+        "table": "evenements_config",
+        "id": "97b4a4f5-3026-42db-955c-e256e717a3b0",
+        "name": "section9 - Service à Domicile",
+        "field": "image_url",
+        "url": "https://i.ibb.co/yBgXgHXQ/9u-E15e-C84-I0b-Rj-EM0ld-Ak-cfb4b1d64dba44458245dcee747c09d6.jpg"
+      },
+      {
+        "table": "evenements_config",
+        "id": "6a4571ae-8e66-446b-9962-af92ef2e0bff",
+        "name": "section10 - Contactez-Nous",
+        "field": "image_url",
+        "url": "https://i.ibb.co/Vc8h6zJD/1000047271.jpg"
+      },
+      {
+        "table": "evenements_config",
+        "id": "30e75d3a-e81e-4aa8-aefb-37c028011584",
+        "name": "section1 - Mariages de Rêve",
+        "field": "image_url",
+        "url": "https://i.ibb.co/r2NjtJVq/1000025287.jpg"
+      },
+      {
+        "table": "site_settings",
+        "id": "08a6dbd2-f244-46d9-8a59-743939a150de",
+        "name": "carousel_image_4",
+        "field": "setting_value",
+        "url": "https://i.ibb.co/M5737bQP/e15f71f8-420b-4d21-85cf-f48308c60a50.jpg"
+      },
+      {
+        "table": "site_settings",
+        "id": "0cfbf959-6351-4125-8578-89b38d650f8b",
+        "name": "carousel_image_3",
+        "field": "setting_value",
+        "url": "https://i.ibb.co/3mZtjZJG/cropped-image.jpg"
+      },
+      {
+        "table": "site_settings",
+        "id": "ce57a0c1-28f3-4636-aa36-206abba7dbf0",
+        "name": "about_image_1",
+        "field": "setting_value",
+        "url": "https://i.ibb.co/rK8VcmcH/cropped-image.jpg"
+      },
+      {
+        "table": "site_settings",
+        "id": "c4037d12-6200-4831-ad1f-79e5ecb216c8",
+        "name": "logo_image",
+        "field": "setting_value",
+        "url": "https://i.ibb.co/GvMxGP1y/Ee-Wbq-FRH-5-Dy-JX3-KME-78e4942e75434f10b09c2c133e14d107.jpg"
+      }
+    ],
+    "files.catbox.moe": [
+      {
+        "table": "evenements_config",
+        "id": "4fced81d-f591-49c7-9aad-8eaf29d6c4c6",
+        "name": "hero - Nous créons des plateaux uniques",
+        "field": "image_url",
+        "url": "https://files.catbox.moe/r6kdr0.jpg"
+      },
+      {
+        "table": "site_settings",
+        "id": "4c29c939-9197-494b-9497-1955fb0d9551",
+        "name": "annonce_image",
+        "field": "setting_value",
+        "url": "https://files.catbox.moe/i1qj18.png"
+      }
+    ]
+  }
+}

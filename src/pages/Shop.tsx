@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useShopEnabled } from '../hooks/useShopEnabled';
+import { useCart } from '../contexts/CartContext';
 
 const Shop: React.FC = () => {
   const { isEnabled, loading } = useShopEnabled();
+  const { cartItems } = useCart();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -16,7 +18,7 @@ const Shop: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
+        <Header cartItemsCount={cartItems.length} />
         <div className="flex items-center justify-center py-24">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600"></div>
         </div>
@@ -29,7 +31,7 @@ const Shop: React.FC = () => {
   if (!isEnabled) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
+        <Header cartItemsCount={cartItems.length} />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="bg-white rounded-lg shadow-lg p-8 md:p-12 text-center">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-yellow-100 mb-6">

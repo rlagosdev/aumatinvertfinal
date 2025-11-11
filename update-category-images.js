@@ -5,75 +5,95 @@ const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-// Mapping of category names to new local image paths
-const categoryImageMapping = {
-  'Produits laitiers': '/categories/produits-laitiers.jpeg',
-  'Biscuits apéritifs': '/categories/biscuits-aperitifs.jpeg',
-  'Légumes': '/categories/legumes.jpeg',
-  'Conserves de légumes': '/categories/conserves-legumes.jpeg',
-  'Biscuits': '/categories/biscuits.jpeg',
-  'Chocolats': '/categories/chocolats.jpeg',
-  'Confitures': '/categories/confitures.jpeg',
-  'Fruits': '/categories/fruits.jpeg',
-  'Jus & boissons': '/categories/jus-boissons.jpeg'
-};
-
 async function updateCategoryImages() {
-  console.log('🔄 Starting category image updates...\n');
+  console.log('🔄 Mise à jour des images de catégories...\n');
 
   try {
-    // First, fetch all categories to see what we have
+    // Récupérer les catégories Biscuits apéritifs et Chocolats
     const { data: categories, error: fetchError } = await supabase
       .from('categories')
       .select('id, nom, image_url')
-      .eq('type_categorie', 'epicerie')
-      .eq('actif', true);
+      .in('nom', ['Biscuits apéritifs', 'Chocolats']);
 
     if (fetchError) {
-      console.error('❌ Error fetching categories:', fetchError);
+      console.error('❌ Erreur lors de la récupération:', fetchError);
       return;
     }
 
-    console.log(`Found ${categories.length} categories:\n`);
-    categories.forEach(cat => {
-      console.log(`  - ${cat.nom}: ${cat.image_url || '(no image)'}`);
-    });
-    console.log('');
-
-    // Update each category with the new image path
-    for (const category of categories) {
-      const newImagePath = categoryImageMapping[category.nom];
-
-      if (newImagePath) {
-        console.log(`📝 Updating "${category.nom}"...`);
-        console.log(`   Old: ${category.image_url || '(none)'}`);
-        console.log(`   New: ${newImagePath}`);
-
-        const { data: updateData, error: updateError } = await supabase
-          .from('categories')
-          .update({ image_url: newImagePath })
-          .eq('id', category.id)
-          .select();
-
-        if (updateError) {
-          console.error(`   ❌ Error updating ${category.nom}:`, updateError);
-          console.error(`   Error details:`, JSON.stringify(updateError, null, 2));
-        } else if (updateData && updateData.length > 0) {
-          console.log(`   ✅ Updated successfully - New URL: ${updateData[0].image_url}`);
-        } else {
-          console.log(`   ⚠️  Update returned no data - may have failed silently`);
-        }
-        console.log('');
-      } else {
-        console.log(`⚠️  No image mapping found for "${category.nom}"`);
-        console.log('');
-      }
+    if (!categories || categories.length === 0) {
+      console.error('❌ Catégories non trouvées');
+      return;
     }
 
-    console.log('✨ Category image update complete!');
+    const biscuits = categories.find(c => c.nom === 'Biscuits apéritifs');
+    const chocolat = categories.find(c => c.nom === 'Chocolats');
+
+    if (!biscuits) {
+      console.error('❌ Catégorie "Biscuits apéritifs" non trouvée');
+      return;
+    }
+    if (!chocolat) {
+      console.error('❌ Catégorie "Chocolats" non trouvée');
+      return;
+    }
+
+    console.log('📋 État initial:');
+    console.log(`   Biscuits apéritifs: ${biscuits.image_url || '(aucune image)'}`);
+    console.log(`   Chocolats: ${chocolat.image_url || '(aucune image)'}\n`);
+
+    if (!biscuits.image_url) {
+      console.error('❌ La catégorie "Biscuits apéritifs" n\'a pas d\'image à transférer');
+      return;
+    }
+
+    // Étape 1: Transférer l'image de Biscuits apéritifs vers Chocolats
+    console.log('🔄 Transfert de l\'image de "Biscuits apéritifs" vers "Chocolats"...');
+    const { data: chocolatUpdate, error: updateChocolatError } = await supabase
+      .from('categories')
+      .update({ image_url: biscuits.image_url })
+      .eq('id', chocolat.id)
+      .select();
+
+    if (updateChocolatError) {
+      console.error('❌ Erreur lors de la mise à jour de Chocolats:', updateChocolatError);
+      return;
+    }
+    console.log('✅ Image de "Chocolats" mise à jour');
+    console.log(`   Nouvelle valeur: ${chocolatUpdate && chocolatUpdate[0] ? chocolatUpdate[0].image_url : 'N/A'}\n`);
+
+    // Étape 2: Supprimer l'image de Biscuits apéritifs
+    console.log('🗑️  Suppression de l\'image de "Biscuits apéritifs"...');
+    const { data: biscuitsUpdate, error: updateBiscuitsError } = await supabase
+      .from('categories')
+      .update({ image_url: null })
+      .eq('id', biscuits.id)
+      .select();
+
+    if (updateBiscuitsError) {
+      console.error('❌ Erreur lors de la mise à jour de Biscuits apéritifs:', updateBiscuitsError);
+      return;
+    }
+    console.log('✅ Image de "Biscuits apéritifs" supprimée');
+    console.log(`   Nouvelle valeur: ${biscuitsUpdate && biscuitsUpdate[0] && biscuitsUpdate[0].image_url ? biscuitsUpdate[0].image_url : '(aucune)'}\n`);
+
+    // Vérification finale
+    console.log('🔍 Vérification des modifications...\n');
+    const { data: updatedCategories } = await supabase
+      .from('categories')
+      .select('id, nom, image_url')
+      .in('nom', ['Biscuits apéritifs', 'Chocolats']);
+
+    const updatedBiscuits = updatedCategories.find(c => c.nom === 'Biscuits apéritifs');
+    const updatedChocolat = updatedCategories.find(c => c.nom === 'Chocolats');
+
+    console.log('📋 État final:');
+    console.log(`   Biscuits apéritifs: ${updatedBiscuits.image_url || '(aucune image)'}`);
+    console.log(`   Chocolats: ${updatedChocolat.image_url || '(aucune image)'}\n`);
+
+    console.log('✅ Modifications terminées avec succès !');
 
   } catch (error) {
-    console.error('❌ Unexpected error:', error);
+    console.error('❌ Erreur inattendue:', error);
   }
 }
 
