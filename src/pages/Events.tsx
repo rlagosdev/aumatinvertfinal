@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Phone, Mail, Calendar, Users, Utensils, Sparkles, Heart, Award, Clock, CheckCircle, ChevronRight } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Phone, Mail, Calendar, Users, Utensils, Sparkles, Heart, Award, Clock, CheckCircle } from 'lucide-react';
 import { supabase } from '../supabase/client';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BotanicalPattern from '../components/BotanicalPattern';
 import CelticKnot from '../components/CelticKnot';
 import ContactModal from '../components/ContactModal';
+import EventCategoryCard from '../components/EventCategoryCard';
 import { useCart } from '../contexts/CartContext';
 
 interface EventSection {
@@ -318,55 +319,13 @@ const Events: React.FC = () => {
                   Autres plateaux & produits événementiels
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                  {categories.map((category) => {
-                    const isSelected = selectedCategory === category.nom;
-                    return (
-                    <Link
+                  {categories.map((category) => (
+                    <EventCategoryCard
                       key={category.id}
-                      to={`/produits/${encodeURIComponent(category.nom)}`}
-                      className={`group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden ${
-                        isSelected ? 'ring-4 ring-site-primary ring-opacity-50' : ''
-                      }`}
-                    >
-                      {/* Category Image */}
-                      {category.image_url ? (
-                        <div className="h-48 overflow-hidden">
-                          <img
-                            src={category.image_url}
-                            alt={category.nom}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-48 bg-gradient-to-br from-site-primary to-site-buttons flex items-center justify-center">
-                          <span className="text-white text-4xl font-bold">
-                            {category.nom.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Category Info */}
-                      <div className="p-6">
-                        <h4 className="text-xl font-bold text-site-primary mb-2 group-hover:text-site-buttons transition-colors">
-                          {category.nom}
-                        </h4>
-                        {category.description && (
-                          <p className="text-gray-600 mb-3 text-sm line-clamp-2">
-                            {category.description}
-                          </p>
-                        )}
-                        <div className="inline-flex items-center text-site-primary font-semibold group-hover:translate-x-2 transition-transform">
-                          Découvrir
-                          <ChevronRight className="h-4 w-4 ml-1" />
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                  })}
+                      category={category}
+                      isSelected={selectedCategory === category.nom}
+                    />
+                  ))}
                 </div>
               </div>
 
