@@ -92,9 +92,9 @@ import React, { useLayoutEffect, useState } from 'react';
                     newestOnTop
                     closeOnClick
                     rtl={false}
-                    pauseOnFocusLoss
+                    pauseOnFocusLoss={false}
                     draggable
-                    pauseOnHover
+                    pauseOnHover={false}
                     theme="light"
                     limit={3}
                     style={{ zIndex: 9999 }}
