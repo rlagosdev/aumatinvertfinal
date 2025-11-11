@@ -49,16 +49,21 @@ const AdminCategories: React.FC = () => {
   // Scroll automatique quand le formulaire s'ouvre
   useEffect(() => {
     if (showForm) {
-      // Scroll la page principale
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Scroll la page principale immédiatement
+      window.scrollTo(0, 0);
 
-      // Scroll le modal après un court délai
-      setTimeout(() => {
+      // Scroll le modal après un délai plus long pour laisser le DOM se mettre à jour
+      const scrollModal = () => {
         const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto') as HTMLElement;
         if (modalContainer) {
-          modalContainer.scrollTo({ top: 0, behavior: 'smooth' });
+          modalContainer.scrollTop = 0;
         }
-      }, 150);
+      };
+
+      // Essayer plusieurs fois pour être sûr que le modal est rendu
+      setTimeout(scrollModal, 50);
+      setTimeout(scrollModal, 150);
+      setTimeout(scrollModal, 300);
     }
   }, [showForm]);
 
