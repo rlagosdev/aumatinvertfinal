@@ -124,6 +124,10 @@ const AdminProducts: React.FC = () => {
     setShowForm(true);
     // Scroll vers le haut à l'ouverture du formulaire
     setTimeout(() => {
+      const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
+      if (modalContainer) {
+        modalContainer.scrollTop = 0;
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
   };
@@ -226,6 +230,10 @@ const AdminProducts: React.FC = () => {
             onClick={() => {
               setShowForm(true);
               setTimeout(() => {
+                const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
+                if (modalContainer) {
+                  modalContainer.scrollTop = 0;
+                }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }, 100);
             }}
