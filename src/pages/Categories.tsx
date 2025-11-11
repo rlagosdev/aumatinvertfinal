@@ -17,6 +17,7 @@ interface Category {
   actif: boolean;
   position: number;
   type_categorie: string | null;
+  updated_at?: string | null;
 }
 
 const Categories: React.FC = () => {

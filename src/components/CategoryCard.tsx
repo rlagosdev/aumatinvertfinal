@@ -9,6 +9,7 @@ interface CategoryCardProps {
     nom: string;
     description: string | null;
     image_url: string | null;
+    updated_at?: string | null;
   };
 }
 
@@ -79,7 +80,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
         {images.length > 0 ? (
           <>
             <img
-              src={images[currentImageIndex]}
+              src={`${images[currentImageIndex]}?t=${category.updated_at || Date.now()}`}
               alt={category.nom}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               onError={(e) => {

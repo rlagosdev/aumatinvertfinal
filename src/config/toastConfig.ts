@@ -10,45 +10,45 @@ export const configureToast = () => {
 
   toast.success = (message: any, options?: any) => {
     return originalSuccess(message, {
+      ...options,
       autoClose: 3000,
       closeOnClick: false,
       pauseOnHover: false,
       pauseOnFocusLoss: false,
-      draggable: false,
-      ...options
+      draggable: false
     });
   };
 
   toast.error = (message: any, options?: any) => {
     return originalError(message, {
+      ...options,
       autoClose: 3000,
       closeOnClick: false,
       pauseOnHover: false,
       pauseOnFocusLoss: false,
-      draggable: false,
-      ...options
+      draggable: false
     });
   };
 
   toast.info = (message: any, options?: any) => {
     return originalInfo(message, {
+      ...options,
       autoClose: 3000,
       closeOnClick: false,
       pauseOnHover: false,
       pauseOnFocusLoss: false,
-      draggable: false,
-      ...options
+      draggable: false
     });
   };
 
   toast.warning = (message: any, options?: any) => {
     return originalWarning(message, {
+      ...options,
       autoClose: 3000,
       closeOnClick: false,
       pauseOnHover: false,
       pauseOnFocusLoss: false,
-      draggable: false,
-      ...options
+      draggable: false
     });
   };
 
