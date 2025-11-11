@@ -46,6 +46,22 @@ const AdminCategories: React.FC = () => {
     fetchCategories();
   }, []);
 
+  // Scroll automatique quand le formulaire s'ouvre
+  useEffect(() => {
+    if (showForm) {
+      // Scroll la page principale
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Scroll le modal après un court délai
+      setTimeout(() => {
+        const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto') as HTMLElement;
+        if (modalContainer) {
+          modalContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 150);
+    }
+  }, [showForm]);
+
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase
@@ -127,9 +143,6 @@ const AdminCategories: React.FC = () => {
   };
 
   const handleEdit = async (category: Category) => {
-    // Scroll vers le haut AVANT d'ouvrir le modal
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
     setEditingCategory(category);
     setFormData({
       nom: category.nom,
@@ -141,14 +154,7 @@ const AdminCategories: React.FC = () => {
     });
     await fetchCarouselImages(category.id);
     setShowForm(true);
-
-    // Scroll le modal aussi après son ouverture
-    setTimeout(() => {
-      const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
-      if (modalContainer) {
-        modalContainer.scrollTop = 0;
-      }
-    }, 100);
+    // Le scroll est géré par useEffect
   };
 
   const handleAddCarouselImage = async () => {
@@ -344,18 +350,7 @@ const AdminCategories: React.FC = () => {
             disabled={loading}
           />
           <button
-            onClick={() => {
-              // Scroll vers le haut AVANT d'ouvrir le modal
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              setShowForm(true);
-              // Scroll le modal aussi après son ouverture
-              setTimeout(() => {
-                const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
-                if (modalContainer) {
-                  modalContainer.scrollTop = 0;
-                }
-              }, 100);
-            }}
+            onClick={() => setShowForm(true)}
             className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
           >
             <Plus className="h-4 w-4" />

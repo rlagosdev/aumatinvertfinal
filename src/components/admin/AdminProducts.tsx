@@ -39,6 +39,22 @@ const AdminProducts: React.FC = () => {
     fetchProducts();
   }, []);
 
+  // Scroll automatique quand le formulaire s'ouvre
+  useEffect(() => {
+    if (showForm) {
+      // Scroll la page principale
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Scroll le modal après un court délai
+      setTimeout(() => {
+        const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto') as HTMLElement;
+        if (modalContainer) {
+          modalContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 150);
+    }
+  }, [showForm]);
+
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
@@ -120,19 +136,9 @@ const AdminProducts: React.FC = () => {
   }, [products, searchTerm, selectedCategory, sortBy, sortOrder]);
 
   const handleEdit = (product: Product) => {
-    // Scroll vers le haut AVANT d'ouvrir le modal
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
     setEditingProduct(product);
     setShowForm(true);
-
-    // Scroll le modal aussi après son ouverture
-    setTimeout(() => {
-      const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
-      if (modalContainer) {
-        modalContainer.scrollTop = 0;
-      }
-    }, 100);
+    // Le scroll est géré par useEffect
   };
 
   const handleDelete = async (productId: string) => {
@@ -230,18 +236,7 @@ const AdminProducts: React.FC = () => {
             <span>Aide Images</span>
           </button>
           <button
-            onClick={() => {
-              // Scroll vers le haut AVANT d'ouvrir le modal
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              setShowForm(true);
-              // Scroll le modal aussi après son ouverture
-              setTimeout(() => {
-                const modalContainer = document.querySelector('.fixed.inset-0.overflow-y-auto');
-                if (modalContainer) {
-                  modalContainer.scrollTop = 0;
-                }
-              }, 100);
-            }}
+            onClick={() => setShowForm(true)}
             className="flex items-center space-x-2 bg-site-primary text-white px-4 py-2 rounded-lg hover:bg-site-primary transition-colors"
           >
             <Plus className="h-4 w-4" />
