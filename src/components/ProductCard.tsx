@@ -9,6 +9,7 @@ import { useWeightTiers } from '../hooks/useWeightTiers';
 import { useProductRanges } from '../hooks/useProductRanges';
 import { useRangeDiscountTiers, calculateRangeDiscountedPrice } from '../hooks/useRangeDiscountTiers';
 import { useProductSections, formatFractionDisplay } from '../hooks/useProductSections';
+import { usePersonPriceTiers, calculatePersonPrice } from '../hooks/usePersonPriceTiers';
 import { useMinimumPickupDate } from '../hooks/useMinimumPickupDate';
 import { useLateOrderCheck } from '../hooks/useLateOrderCheck';
 import { toast } from 'react-toastify';
@@ -55,6 +56,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { weightTiers } = useWeightTiers(product.id);
   const { ranges: productRanges } = useProductRanges(product.id);
   const { sections: productSections } = useProductSections(product.id);
+  const { tiers: personPriceTiers } = usePersonPriceTiers(product.id);
   const { getMinimumPickupDate } = useMinimumPickupDate();
 
   // Debug: Log weight pricing info for ALL products
@@ -155,6 +157,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     );
   }, [selectedRange, selectedPersonCount, rangeDiscountTiers, product.prix_par_gamme]);
 
+  // Calculer le prix avec tarifs dégressifs par personne
+  const personPriceInfo = useMemo(() => {
+    if (!product.prix_par_personne || !product.prix_unitaire_personne) {
+      return null;
+    }
+    return calculatePersonPrice(
+      selectedPersonCount,
+      product.prix_unitaire_personne,
+      personPriceTiers
+    );
+  }, [product.prix_par_personne, product.prix_unitaire_personne, selectedPersonCount, personPriceTiers]);
+
   // Récupérer le palier sélectionné
   const selectedTier = useMemo(() => {
     if (!selectedTierId) return null;
@@ -215,8 +229,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       ? selectedSection.prix
       : product.prix_par_gamme && selectedRange
         ? (rangeDiscountedPrice?.finalPrice || selectedRange.prix_par_personne * selectedPersonCount)
-        : product.prix_par_personne && product.prix_unitaire_personne
-          ? product.prix_unitaire_personne * selectedPersonCount
+        : product.prix_par_personne && personPriceInfo
+          ? personPriceInfo.totalPrice
           : product.vendu_au_poids && selectedWeightTier
             ? selectedWeightTier.prix
             : product.use_price_tiers && selectedTier
@@ -396,14 +410,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 </>
               )}
             </div>
-          ) : product.prix_par_personne && product.prix_unitaire_personne ? (
+          ) : product.prix_par_personne && personPriceInfo ? (
             /* Affichage prix par personne */
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-2xl font-bold text-site-primary">
-                    {(product.prix_unitaire_personne * selectedPersonCount).toFixed(2)} €
+                    {personPriceInfo.totalPrice.toFixed(2)} €
                   </span>
+                  {personPriceInfo.hasTierDiscount && (
+                    <span className="ml-2 text-sm line-through text-gray-400">
+                      {(product.prix_unitaire_personne! * selectedPersonCount).toFixed(2)} €
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center text-sm text-site-primary">
                   <Users className="h-4 w-4 mr-1" />
@@ -411,7 +430,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 </div>
               </div>
               <div className="text-xs text-site-text-dark">
-                {product.prix_unitaire_personne.toFixed(2)} € par personne
+                {personPriceInfo.pricePerPerson.toFixed(2)} € par personne
+                {personPriceInfo.hasTierDiscount && (
+                  <span className="ml-2 text-green-600 font-medium">
+                    (Tarif dégressif appliqué !)
+                  </span>
+                )}
               </div>
             </div>
           ) : product.vendu_au_poids && selectedWeightTier ? (
@@ -839,7 +863,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
             <div className="text-center p-2 rounded-lg bg-white border border-site-buttons">
               {product.prix_par_gamme && rangeDiscountedPrice && rangeDiscountedPrice.discountPercentage > 0 ? (
-                /* Avec remise */
+                /* Avec remise gamme */
                 <>
                   <p className="text-xs text-gray-500 line-through">
                     {rangeDiscountedPrice.originalPrice.toFixed(2)} €
@@ -854,10 +878,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     Économie: {(rangeDiscountedPrice.originalPrice - rangeDiscountedPrice.finalPrice).toFixed(2)} €
                   </p>
                   <p className="text-xs text-site-text-dark mt-1">
-                    {(product.prix_par_gamme && selectedRange
-                      ? selectedRange.prix_par_personne
-                      : product.prix_unitaire_personne!
-                    ).toFixed(2)} € × {selectedPersonCount} {selectedPersonCount > 1 ? 'personnes' : 'personne'}
+                    {selectedRange!.prix_par_personne.toFixed(2)} € × {selectedPersonCount} {selectedPersonCount > 1 ? 'personnes' : 'personne'}
+                  </p>
+                </>
+              ) : product.prix_par_personne && personPriceInfo && personPriceInfo.hasTierDiscount ? (
+                /* Avec tarif dégressif par personne */
+                <>
+                  <p className="text-xs text-gray-500 line-through">
+                    {(product.prix_unitaire_personne! * selectedPersonCount).toFixed(2)} €
+                  </p>
+                  <p className="text-sm text-green-600">
+                    Prix total : <strong className="text-lg">
+                      {personPriceInfo.totalPrice.toFixed(2)} €
+                    </strong>
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Économie: {((product.prix_unitaire_personne! * selectedPersonCount) - personPriceInfo.totalPrice).toFixed(2)} € (Tarif dégressif appliqué !)
+                  </p>
+                  <p className="text-xs text-site-text-dark mt-1">
+                    {personPriceInfo.pricePerPerson.toFixed(2)} € × {selectedPersonCount} {selectedPersonCount > 1 ? 'personnes' : 'personne'}
                   </p>
                 </>
               ) : (
@@ -867,14 +906,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     Prix total : <strong className="text-lg">
                       {(product.prix_par_gamme && selectedRange
                         ? selectedRange.prix_par_personne * selectedPersonCount
-                        : product.prix_unitaire_personne! * selectedPersonCount
+                        : personPriceInfo
+                          ? personPriceInfo.totalPrice
+                          : product.prix_unitaire_personne! * selectedPersonCount
                       ).toFixed(2)} €
                     </strong>
                   </p>
                   <p className="text-xs text-site-text-dark mt-1">
                     {(product.prix_par_gamme && selectedRange
                       ? selectedRange.prix_par_personne
-                      : product.prix_unitaire_personne!
+                      : personPriceInfo
+                        ? personPriceInfo.pricePerPerson
+                        : product.prix_unitaire_personne!
                     ).toFixed(2)} € × {selectedPersonCount} {selectedPersonCount > 1 ? 'personnes' : 'personne'}
                   </p>
                 </>
