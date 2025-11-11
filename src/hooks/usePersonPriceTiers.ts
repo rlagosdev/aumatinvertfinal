@@ -8,6 +8,8 @@ export interface PersonPriceTier {
   max_persons: number | null;
   price_per_person: number;
   tier_order: number;
+  discount_type?: 'fixed' | 'percentage';
+  discount_percentage?: number | null;
 }
 
 export const usePersonPriceTiers = (productId: string | undefined) => {
@@ -88,9 +90,16 @@ export const calculatePersonPrice = (
   const applicableTier = findApplicableTier(personCount, tiers);
 
   if (applicableTier) {
+    let pricePerPerson = applicableTier.price_per_person;
+
+    // Si c'est un pourcentage, calculer le prix en appliquant la réduction
+    if (applicableTier.discount_type === 'percentage' && applicableTier.discount_percentage) {
+      pricePerPerson = basePricePerPerson * (1 - applicableTier.discount_percentage / 100);
+    }
+
     return {
-      pricePerPerson: applicableTier.price_per_person,
-      totalPrice: applicableTier.price_per_person * personCount,
+      pricePerPerson: pricePerPerson,
+      totalPrice: pricePerPerson * personCount,
       appliedTier: applicableTier,
       hasTierDiscount: true
     };

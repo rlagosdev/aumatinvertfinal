@@ -9,16 +9,20 @@ interface PersonPriceTier {
   max_persons: number | null;
   price_per_person: number;
   tier_order: number;
+  discount_type?: 'fixed' | 'percentage';
+  discount_percentage?: number | null;
 }
 
 interface PersonPriceTiersManagerProps {
   productId: string;
   prixParPersonne: boolean;
+  prixUnitairePersonne?: number;
 }
 
 const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
   productId,
-  prixParPersonne
+  prixParPersonne,
+  prixUnitairePersonne
 }) => {
   const [tiers, setTiers] = useState<PersonPriceTier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +72,9 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
         min_persons: newMinPersons,
         max_persons: newMinPersons + 9,
         price_per_person: 0,
-        tier_order: tiers.length + 1
+        tier_order: tiers.length + 1,
+        discount_type: 'fixed',
+        discount_percentage: null
       }
     ]);
   };
@@ -88,13 +94,25 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
     for (let i = 0; i < tiers.length; i++) {
       const tier = tiers[i];
 
-      if (tier.price_per_person <= 0) {
-        setMessage({
-          type: 'error',
-          text: `Le palier ${i + 1} doit avoir un prix positif`
-        });
-        setTimeout(() => setMessage(null), 3000);
-        return false;
+      // Validation selon le type de remise
+      if (tier.discount_type === 'percentage') {
+        if (!tier.discount_percentage || tier.discount_percentage <= 0 || tier.discount_percentage > 100) {
+          setMessage({
+            type: 'error',
+            text: `Le palier ${i + 1} doit avoir un pourcentage entre 1 et 100`
+          });
+          setTimeout(() => setMessage(null), 3000);
+          return false;
+        }
+      } else {
+        if (tier.price_per_person <= 0) {
+          setMessage({
+            type: 'error',
+            text: `Le palier ${i + 1} doit avoir un prix positif`
+          });
+          setTimeout(() => setMessage(null), 3000);
+          return false;
+        }
       }
 
       if (tier.min_persons <= 0) {
@@ -165,7 +183,9 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
             min_persons: tier.min_persons,
             max_persons: tier.max_persons,
             price_per_person: tier.price_per_person,
-            tier_order: index + 1
+            tier_order: index + 1,
+            discount_type: tier.discount_type || 'fixed',
+            discount_percentage: tier.discount_percentage
           })));
 
         if (insertError) throw insertError;
@@ -253,62 +273,128 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Minimum de personnes */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  <Users className="h-3 w-3 inline mr-1" />
-                  Min. personnes
-                </label>
-                <input
-                  type="number"
-                  value={tier.min_persons}
-                  onChange={(e) => updateTier(index, 'min_persons', parseInt(e.target.value) || 1)}
-                  min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Minimum de personnes */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <Users className="h-3 w-3 inline mr-1" />
+                    Min. personnes
+                  </label>
+                  <input
+                    type="number"
+                    value={tier.min_persons}
+                    onChange={(e) => updateTier(index, 'min_persons', parseInt(e.target.value) || 1)}
+                    min="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Maximum de personnes */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <Users className="h-3 w-3 inline mr-1" />
+                    Max. personnes
+                  </label>
+                  <input
+                    type="number"
+                    value={tier.max_persons || ''}
+                    onChange={(e) => updateTier(index, 'max_persons', e.target.value ? parseInt(e.target.value) : null)}
+                    min={tier.min_persons}
+                    placeholder="Illimité"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Type de remise */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Type de tarif
+                  </label>
+                  <select
+                    value={tier.discount_type || 'fixed'}
+                    onChange={(e) => {
+                      updateTier(index, 'discount_type', e.target.value as 'fixed' | 'percentage');
+                      // Réinitialiser les valeurs selon le type
+                      if (e.target.value === 'percentage') {
+                        updateTier(index, 'discount_percentage', 10);
+                      } else {
+                        updateTier(index, 'discount_percentage', null);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="fixed">Prix fixe</option>
+                    <option value="percentage">Pourcentage de réduction</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Maximum de personnes */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  <Users className="h-3 w-3 inline mr-1" />
-                  Max. personnes
-                </label>
-                <input
-                  type="number"
-                  value={tier.max_persons || ''}
-                  onChange={(e) => updateTier(index, 'max_persons', e.target.value ? parseInt(e.target.value) : null)}
-                  min={tier.min_persons}
-                  placeholder="Illimité"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Prix par personne */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  <DollarSign className="h-3 w-3 inline mr-1" />
-                  Prix/personne (€)
-                </label>
-                <input
-                  type="number"
-                  value={tier.price_per_person}
-                  onChange={(e) => updateTier(index, 'price_per_person', parseFloat(e.target.value) || 0)}
-                  step="0.01"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+              {/* Champ de saisie selon le type */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {tier.discount_type === 'percentage' ? (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <DollarSign className="h-3 w-3 inline mr-1" />
+                      Réduction (%)
+                    </label>
+                    <input
+                      type="number"
+                      value={tier.discount_percentage || ''}
+                      onChange={(e) => updateTier(index, 'discount_percentage', parseFloat(e.target.value) || 0)}
+                      step="1"
+                      min="1"
+                      max="100"
+                      placeholder="Ex: 20"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {prixUnitairePersonne && tier.discount_percentage ? (
+                        <>Prix résultant: {(prixUnitairePersonne * (1 - tier.discount_percentage / 100)).toFixed(2)}€/pers</>
+                      ) : (
+                        'Pourcentage de réduction sur le prix de base'
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <DollarSign className="h-3 w-3 inline mr-1" />
+                      Prix/personne (€)
+                    </label>
+                    <input
+                      type="number"
+                      value={tier.price_per_person}
+                      onChange={(e) => updateTier(index, 'price_per_person', parseFloat(e.target.value) || 0)}
+                      step="0.01"
+                      min="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Aperçu */}
-            {tier.price_per_person > 0 && (
-              <div className="mt-3 p-2 bg-blue-50 rounded text-sm text-blue-800">
-                <strong>Aperçu :</strong> {tier.min_persons}-{tier.max_persons || '∞'} personnes → {tier.price_per_person.toFixed(2)}€/pers
-                {' '}(Ex: {tier.min_persons} pers = {(tier.price_per_person * tier.min_persons).toFixed(2)}€)
-              </div>
-            )}
+            {(() => {
+              let pricePerPerson = tier.price_per_person;
+              if (tier.discount_type === 'percentage' && tier.discount_percentage && prixUnitairePersonne) {
+                pricePerPerson = prixUnitairePersonne * (1 - tier.discount_percentage / 100);
+              }
+
+              if (pricePerPerson > 0) {
+                return (
+                  <div className="mt-3 p-2 bg-blue-50 rounded text-sm text-blue-800">
+                    <strong>Aperçu :</strong> {tier.min_persons}-{tier.max_persons || '∞'} personnes → {pricePerPerson.toFixed(2)}€/pers
+                    {tier.discount_type === 'percentage' && tier.discount_percentage && (
+                      <span className="ml-2 text-green-700 font-medium">(-{tier.discount_percentage}%)</span>
+                    )}
+                    {' '}(Ex: {tier.min_persons} pers = {(pricePerPerson * tier.min_persons).toFixed(2)}€)
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         ))}
 

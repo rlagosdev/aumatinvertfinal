@@ -1149,6 +1149,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product: initialProduct, onCl
             <PersonPriceTiersManager
               productId={product.id}
               prixParPersonne={formData.prix_par_personne || false}
+              prixUnitairePersonne={formData.prix_unitaire_personne || undefined}
             />
           )}
 
