@@ -109,7 +109,7 @@ const TempWeightPricingManager: React.FC<TempWeightPricingManagerProps> = ({
             </div>
             {prixBase && poidsBaseGrammes && (
               <p className="text-xs text-teal-600 mt-2">
-                Prix par 100g: <strong>{((prixBase / poidsBaseGrammes) * 100).toFixed(2)}€</strong>
+                Prix au kg: <strong>{((prixBase / poidsBaseGrammes) * 1000).toFixed(2)}€</strong>
               </p>
             )}
           </div>
@@ -133,7 +133,7 @@ const TempWeightPricingManager: React.FC<TempWeightPricingManagerProps> = ({
                         {tier.prix.toFixed(2)}€
                       </span>
                       <span className="text-xs text-teal-500">
-                        ({((tier.prix / tier.poids_grammes) * 100).toFixed(2)}€/100g)
+                        ({((tier.prix / tier.poids_grammes) * 1000).toFixed(2)}€/kg)
                       </span>
                     </div>
                     <button

@@ -11,6 +11,7 @@ import React, { useLayoutEffect, useState } from 'react';
     import { CursorToastProvider } from './src/contexts/CursorToastContext';
     import { useSiteColors } from './src/hooks/useSiteColors';
     import { useAutoNotifications } from './src/hooks/useAutoNotifications';
+    import { configureToast } from './src/config/toastConfig';
     import PWAInstallBanner from './src/components/PWAInstallBanner';
     import NotificationTestButton from './src/components/NotificationTestButton';
     // import ChatbotClient from './src/components/ChatbotClient';
@@ -49,6 +50,11 @@ import React, { useLayoutEffect, useState } from 'react';
     };
 
     const App: React.FC = () => {
+      // Configurer les toasts AVANT tout le reste
+      React.useEffect(() => {
+        configureToast();
+      }, []);
+
       // Charger et appliquer les couleurs du site
       useSiteColors();
 
@@ -90,10 +96,10 @@ import React, { useLayoutEffect, useState } from 'react';
                     autoClose={3000}
                     hideProgressBar={false}
                     newestOnTop
-                    closeOnClick
+                    closeOnClick={false}
                     rtl={false}
                     pauseOnFocusLoss={false}
-                    draggable
+                    draggable={false}
                     pauseOnHover={false}
                     theme="light"
                     limit={3}

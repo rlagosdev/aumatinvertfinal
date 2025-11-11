@@ -453,7 +453,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 </div>
               </div>
               <div className="text-xs text-site-text-dark">
-                Prix de base : {product.prix_par_100g?.toFixed(2)} € / 100g
+                Prix de base : {(selectedWeightTier.prix / (selectedWeightTier.poids_grammes / 1000)).toFixed(2)} € / kg
               </div>
             </div>
           ) : product.use_price_tiers && selectedTier ? (
@@ -697,7 +697,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                       {tier.prix.toFixed(2)} €
                     </div>
                     <div className="text-xs text-site-text-dark">
-                      {((tier.prix / tier.poids_grammes) * 100).toFixed(2)} € / 100g
+                      {((tier.prix / tier.poids_grammes) * 1000).toFixed(2)} € / kg
                     </div>
                   </div>
                 </label>
