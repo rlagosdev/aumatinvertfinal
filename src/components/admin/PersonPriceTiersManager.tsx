@@ -189,15 +189,30 @@ const PersonPriceTiersManager: React.FC<PersonPriceTiersManagerProps> = ({
 
       // Ensuite, insérer les nouveaux paliers
       if (tiers.length > 0) {
-        const tiersToInsert = tiers.map((tier, index) => ({
-          product_id: tier.product_id,
-          min_persons: tier.min_persons,
-          max_persons: tier.max_persons,
-          price_per_person: tier.price_per_person,
-          tier_order: index + 1,
-          discount_type: tier.discount_type || 'fixed',
-          discount_percentage: tier.discount_percentage
-        }));
+        const tiersToInsert = tiers.map((tier, index) => {
+          // Calculer le prix par personne en fonction du type
+          let finalPricePerPerson = tier.price_per_person;
+
+          if (tier.discount_type === 'percentage' && tier.discount_percentage && prixUnitairePersonne) {
+            // Si c'est un pourcentage, calculer le prix final
+            finalPricePerPerson = prixUnitairePersonne * (1 - tier.discount_percentage / 100);
+          }
+
+          // S'assurer qu'on a un prix valide (>= 0)
+          if (finalPricePerPerson < 0) {
+            finalPricePerPerson = 0;
+          }
+
+          return {
+            product_id: tier.product_id,
+            min_persons: tier.min_persons,
+            max_persons: tier.max_persons,
+            price_per_person: finalPricePerPerson,
+            tier_order: index + 1,
+            discount_type: tier.discount_type || 'fixed',
+            discount_percentage: tier.discount_percentage
+          };
+        });
 
         console.log('📝 Données à insérer:', tiersToInsert);
 
